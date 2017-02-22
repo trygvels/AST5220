@@ -12,6 +12,8 @@ module time_mod
   real(dp),    allocatable, dimension(:) :: x_eta              ! Grid points for eta
   real(dp),    allocatable, dimension(:) :: eta, eta2          ! Eta and eta'' at each grid point
 
+  real(dp),    allocatable, dimension(:) :: uniform_a          ! uniform conformal time
+
 contains
 
   subroutine initialize_time_mod
@@ -40,14 +42,38 @@ contains
     allocate(x_t(n_t))
     allocate(a_t(n_t))
 
+ 	x_t(1) = x_start_rec 					! initial x
+	a_t(1) = exp(x_t(1))					! initial a
 
+	do i = 1,n_t-1							! filling arrays
+		if (i < n1 + 1) then
+			dx = (x_end_rec - x_start_rec)/n1
+		else 
+			dx = (x_0 - x_end_rec)/n2	
+		end if
+		x_t(i+1) = x_t(i) + dx 
+		a_t(i+1) = exp(x_t(i+1))
+	end do
+	! LAST NUMBER WRONG
+	write(*,*) x_t(1), x_t(500)
+	write(*,*) a_t(1), a_t(500)
 
     ! Task: 1) Compute the conformal time at each eta time step
     !       2) Spline the resulting function, using the provided "spline" routine in spline_1D_mod.f90
     allocate(x_eta(n_eta))
     allocate(eta(n_eta))
     allocate(eta2(n_eta))
-    
+	allocate(uniform_a(n_eta))    
+
+	uniform_a(1) = a_init ! initial values
+	x_eta(1) = x_eta1	  ! initial values
+	do i = 1, n_eta-1
+		uniform_a(i+1) = uniform_a(i) + (1-a_init)/(n_eta)
+		x_eta(i+1) = log(uniform_a(i+1))
+	end do
+	
+	! write(*,*) uniform_a(1), uniform_a(1000)
+	! write(*,*) x_eta(1), x_eta(1000)
 
   end subroutine initialize_time_mod
 
@@ -58,7 +84,7 @@ contains
 
     real(dp), intent(in) :: x
     real(dp)             :: get_H
-
+	get_H = H_0*sqrt((omega_b+omega_m)*exp**(-3*x)+(omega_r+omega_nu)*exp**(-4*x)+omega_lambda)
   end function get_H
 
   ! Task: Write a function that computes H' = a*H  at given x
@@ -67,7 +93,7 @@ contains
 
     real(dp), intent(in) :: x
     real(dp)             :: get_H_p
-
+	get_H_p = H_*sqrt((omega_b+omega_m)*exp**(-x)+(omega_r+omega_nu)*exp**(-2*x)+omega_lambda*exp(2*x))
   end function get_H_p
 
   ! Task: Write a function that computes dH'/dx at given x
@@ -76,7 +102,7 @@ contains
 
     real(dp), intent(in) :: x
     real(dp)             :: get_dH_p
-
+	get_dH_p = -0.5*H_0((omega_b+omega_m)*e**(-x)+2*(omega_r+omega_nu)*e**(-2*x)-2*omega_lambda*e**(2*x))/sqrt((omega_b+omega_m)*exp**(-x)+(omega_r+omega_nu)*exp**(-2*x)+omega_lambda*exp(2*x))
   end function get_dH_p
 
   ! Task: Write a function that computes eta(x), using the previously precomputed splined function
