@@ -8,5 +8,5 @@ program cmbspec
   call initialize_time_mod
 
   ! Output to file desired quantities here
-  write(*,*) 'Hello world!'
+  
 end program cmbspec
