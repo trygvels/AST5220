@@ -13,15 +13,13 @@ module time_mod
   real(dp),    allocatable, dimension(:) :: x_eta              ! Grid points for eta
   real(dp),    allocatable, dimension(:) :: eta, eta2          ! Eta and eta'' at each grid point
 
-  real(dp),    allocatable, dimension(:) :: uniform_a          ! uniform conformal time
-
 contains
 
   subroutine initialize_time_mod
     implicit none
 
     integer(i4b) :: i, n, n1, n2
-    real(dp)     :: z_start_rec, z_end_rec, z_0, x_start_rec, x_end_rec, x_0, dx, x_eta1, x_eta2, eta_init, a_init, step, eps, stepmin, yp1,y2,ypn
+    real(dp)     :: z_start_rec, z_end_rec, z_0, x_start_rec, x_end_rec, x_0, dx, x_eta1, x_eta2, eta_init, a_init, step, eps, stepmin, yp1,ypn
 
     ! Define two epochs, 1) during and 2) after recombination.
     n1          = 200                       ! Number of grid points during recombination
@@ -62,10 +60,6 @@ contains
 		a_t(i) = exp(x_t(i))
 	end do
 	
-	! LAST NUMBER WRONG
-	!write(*,*) x_t(1), x_t(500)
-	!write(*,*) a_t(1), a_t(500)
-
 
 
         ! Task: 1) Compute the conformal time at each eta time step
@@ -73,7 +67,6 @@ contains
         allocate(x_eta(n_eta))
         allocate(eta(n_eta))
         allocate(eta2(n_eta))
-        allocate(uniform_a(n_eta))    
 
         dx = (x_eta2-x_eta1)/(n_eta-1)
 	x_eta(1) = x_eta1	  ! Uniformly spaced x-grid
@@ -83,19 +76,32 @@ contains
 
         
         ! Integrating for eta
+        
 	step =  abs(1.d-2*(x_eta(1)-x_eta(2)))      ! step length
         eta(1) = eta_init                          ! initial value of et
 	do i = 2, n_eta
 		eta(i) = eta(i-1)
 		call odeint(eta(i:i), x_eta(i-1),x_eta(i), eps, step, stepmin, derivs, bsstep, output) 	
-	end do	
+        end do
+        
+        ! Write to file - Eta, x_eta
+        open(2, file="eta.dat", action="write")
+        do i=1,n_eta
+           write(2,*) eta(i), x_eta(i)
+        end do
+        close(2)
        
 
         ! Splining eta
         call spline(x_eta, eta,yp1,ypn,eta2)
-        write(*,*) get_eta(x_t)
-
-
+        
+        ! Spline + Interplolation write to file
+        open (1,file="splint.dat",action="write")
+        do i=1,n_t
+           write (1,*) get_eta(x_t(i)), x_t(i)
+        end do
+        close(1)
+        
   end subroutine initialize_time_mod
 
 ! dnu/dx=c/H_p
