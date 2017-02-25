@@ -80,7 +80,7 @@ fig = plt.figure(figsize=(10.24, 2.56))
 plt.title(r"/Omega")
 plt.xlabel(r"Percentage")
 plt.ylabel(r"x = log(a)")
-plt.plot(x,Om,color=tableau20[2],x,Ob,color=tableau20[4],x,Or,color=tableau20[6]x,Ol,color=tableau20[8])
+plt.plot(x,Om,x,Ob,x,Or,x,Ol)
 fig.savefig('Omegas.pdf', bbox_inches='tight',pad_inches=0.106)
 plt.show()
 

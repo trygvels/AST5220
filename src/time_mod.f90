@@ -102,7 +102,7 @@ subroutine initialize_time_mod
   ! Calculating Omegas
   open(3, file="omegas.dat", action="write")
   do i=1, n_t
-    rho_cc = 3*get_G(x_t(i))/(8*pi*G_grav)
+    rho_cc = 3*get_H(x_t(i))/(8*pi*G_grav)
 
     rho_m = Omega_m*rho_c*exp(x_t(i))**-3
     rho_b = Omega_b*rho_c*exp(x_t(i))**-3
@@ -115,7 +115,7 @@ subroutine initialize_time_mod
   ! H values write - H(x), H(z)
   open(4, file="HxHz.dat", action="write")
   do i=1,n_t
-    z = 1/x(i) - 1
+    z = 1/x_t(i) - 1
     write(3,*) get_H(x_t(i)), z, get_H(z)
   end do
   close(4)  
