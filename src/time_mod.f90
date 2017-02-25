@@ -84,7 +84,7 @@ subroutine initialize_time_mod
   ! Write to file - Eta, x_eta
   open(1, file="eta.dat", action="write")
   do i=1,n_eta
-     write(2,*) eta(i), x_eta(i)
+     write(1,"(3f8.3)",advance="no") eta(i), x_eta(i)
   end do
   close(1)
  
@@ -95,7 +95,7 @@ subroutine initialize_time_mod
   ! Spline + Interplolation write to file
   open (2,file="etasplint.dat",action="write")
   do i=1,n_t
-     write (1,*) get_eta(x_t(i)), x_t(i)
+     write (2,"(3f8.3)",advance="no") get_eta(x_t(i)), x_t(i)
   end do
   close(2)
 
@@ -108,7 +108,7 @@ subroutine initialize_time_mod
     rho_b = Omega_b*rho_c*exp(x_t(i))**-3
     rho_r = Omega_r*rho_c*exp(x_t(i))**-4
     rho_lambda = Omega_lambda*rho_c
-    write(3,*) rho_m/rho_cc, rho_m/rho_cc,rho_b/rho_cc,rho_lambda/rho_cc
+    write(3,"(3f8.3)",advance="no") rho_m/rho_cc, rho_m/rho_cc,rho_b/rho_cc,rho_lambda/rho_cc
   end do
   close(3)
 
@@ -116,7 +116,7 @@ subroutine initialize_time_mod
   open(4, file="HxHz.dat", action="write")
   do i=1,n_t
     z = 1/x_t(i) - 1
-    write(3,*) get_H(x_t(i)), z, get_H(z)
+    write(4,"(3f8.3)",advance="no") get_H(x_t(i)), z, get_H(z)
   end do
   close(4)  
   end subroutine initialize_time_mod
@@ -139,7 +139,6 @@ subroutine initialize_time_mod
     real(dp)             :: get_H
 	get_H = H_0*sqrt((Omega_b+Omega_m)*exp(-3*x)+(Omega_r+Omega_nu)*exp(-4*x)+Omega_lambda)
   end function get_H
-
 
 
   ! Task: Write a function that computes H' = a*H  at given x
