@@ -59,7 +59,6 @@ subroutine initialize_time_mod
      x_t(i) = x_t(i-1) + dx 
      a_t(i) = exp(x_t(i))
   end do
-  
   ! Task: 1) Compute the conformal time at each eta time step
   !       2) Spline the resulting function, using the provided "spline" routine in spline_1D_mod.f90
   allocate(x_eta(n_eta))
@@ -87,14 +86,13 @@ subroutine initialize_time_mod
   end do
   close(1)
  
-  write(*,*) x_t(1), a_t(1), x_eta(1)
   ! Splining eta
   call spline(x_eta, eta,yp1,ypn,eta2)
   
   ! Spline + Interplolation write to file
   open (2,file="etasplint.dat",action="write")
   do i=1,n_t
-     write (2,*) get_eta(x_t(i)), x_t(i)
+     write (2,*) get_eta(x_eta(i)), x_t(i)
   end do
   close(2)
 
@@ -102,12 +100,12 @@ subroutine initialize_time_mod
   ! SOMETHING WRONG
   open(3, file="omegas1.dat", action="write")
   open(5, file="omegas2.dat",action="write")
-  do i=1, n_t
-    rho_cc = 3*get_H(x_t(i))/(8*pi*G_grav)
+  do i=1, n_eta
+    rho_cc = 3*get_H(x_eta(i))/(8*pi*G_grav)
 
-    rho_m = Omega_m*rho_c*exp(x_t(i))**-3
-    rho_b = Omega_b*rho_c*exp(x_t(i))**-3
-    rho_r = Omega_r*rho_c*exp(x_t(i))**-4
+    rho_m = Omega_m*rho_c*exp(x_eta(i))**-3
+    rho_b = Omega_b*rho_c*exp(x_eta(i))**-3
+    rho_r = Omega_r*rho_c*exp(x_eta(i))**-4
     rho_lambda = Omega_lambda*rho_c
     write(3,*) rho_m/rho_cc, rho_m/rho_cc
     write(5,*) rho_b/rho_cc, rho_lambda/rho_cc
@@ -118,9 +116,9 @@ subroutine initialize_time_mod
   ! H values write - H(x), H(z)
   ! SOMETHING WRONG
   open(4, file="HxHz.dat", action="write")
-  do i=1,n_t
-    z = 1-exp(-x_t(i))
-    write(4,*) get_H(x_t(i)), z, get_H(log((1-z)**-1))
+  do i=1,n_eta
+    z = 1-exp(-x_eta(i))
+    write(4,*) get_H(x_eta(i)), z, get_H(log((1-z)**-1))
   end do
   close(4)  
   end subroutine initialize_time_mod
