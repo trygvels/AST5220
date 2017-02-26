@@ -69,7 +69,7 @@ subroutine initialize_time_mod
   write(*,*) dx
   x_eta(1) = x_eta1	  ! Uniformly spaced x-grid
   do i = 2, n_eta
-     x_eta(i) = x_eta(i-1) - dx
+     x_eta(i) = x_eta(i-1) + dx
   end do
 
 ! Integrating for eta        
@@ -88,7 +88,7 @@ subroutine initialize_time_mod
   close(1)
  
   ! Splining eta
-  call spline(x_eta, eta,yp1,ypn,eta2)
+  call spline(x_t, eta,yp1,ypn,eta2)
   
   ! Spline + Interplolation write to file
   open (2,file="etasplint.dat",action="write")
