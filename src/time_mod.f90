@@ -60,7 +60,6 @@ subroutine initialize_time_mod
 		a_t(i) = exp(x_t(i))
 	end do
   
-
   ! Task: 1) Compute the conformal time at each eta time step
   !       2) Spline the resulting function, using the provided "spline" routine in spline_1D_mod.f90
   allocate(x_eta(n_eta))
