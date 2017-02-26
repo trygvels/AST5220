@@ -92,7 +92,7 @@ subroutine initialize_time_mod
   ! Spline + Interplolation write to file
   open (2,file="etasplint.dat",action="write")
   do i=1,n_t
-     write (2,*) get_eta(x_t(i)), x_t(i)
+     write (2,*) get_eta(x_eta(i)), x_t(i)
   end do
   close(2)
 
