@@ -47,18 +47,18 @@ subroutine initialize_time_mod
   allocate(x_t(n_t))
   allocate(a_t(n_t))
 
- 	x_t(1) = x_start_rec 					! initial x
-	a_t(1) = exp(x_t(1))					! initial a
+  x_t(1) = x_start_rec 					! initial x
+  a_t(1) = exp(x_t(1))					! initial a
 
-	do i = 2,n_t							! filling arrays
-		if (i < n1 + 1) then
-			dx = (x_end_rec - x_start_rec)/(n1-1)
-		else 
-			dx = (x_0 - x_end_rec)/(n2-1)
-		end if
-		x_t(i) = x_t(i-1) + dx 
-		a_t(i) = exp(x_t(i))
-	end do
+  do i = 2,n_t							! filling arrays
+     if (i < n1 + 1) then
+        dx = (x_end_rec - x_start_rec)/(n1-1)
+     else 
+        dx = (x_0 - x_end_rec)/(n2-1)
+     end if
+     x_t(i) = x_t(i-1) + dx 
+     a_t(i) = exp(x_t(i))
+  end do
   
   ! Task: 1) Compute the conformal time at each eta time step
   !       2) Spline the resulting function, using the provided "spline" routine in spline_1D_mod.f90
@@ -67,17 +67,17 @@ subroutine initialize_time_mod
   allocate(eta2(n_eta))
 
   dx = (x_eta2-x_eta1)/(n_eta-1)
-	x_eta(1) = x_eta1	  ! Uniformly spaced x-grid
-	do i = 2, n_eta
-		x_eta(i) = x_eta(i-1) + dx
-	end do
+  x_eta(1) = x_eta1	  ! Uniformly spaced x-grid
+  do i = 2, n_eta
+     x_eta(i) = x_eta(i-1) + dx
+  end do
 
 ! Integrating for eta        
   step =  abs(1.d-2*(x_eta(1)-x_eta(2)))      ! step length
   eta(1) = eta_init                          ! initial value of et
-	do i = 2, n_eta
-		eta(i) = eta(i-1)
-		call odeint(eta(i:i), x_eta(i-1),x_eta(i), eps, step, stepmin, derivs, bsstep, output) 	
+  do i = 2, n_eta
+     eta(i) = eta(i-1)
+     call odeint(eta(i:i), x_eta(i-1),x_eta(i), eps, step, stepmin, derivs, bsstep, output) 	
   end do
   
   ! Write to file - Eta, x_eta
@@ -87,7 +87,7 @@ subroutine initialize_time_mod
   end do
   close(1)
  
-
+  write(*,*) x_t(1), a_t(1), x_eta(1)
   ! Splining eta
   call spline(x_eta, eta,yp1,ypn,eta2)
   
@@ -99,8 +99,9 @@ subroutine initialize_time_mod
   close(2)
 
   ! Calculating Omegas
-  ! THIS IS WRONG rho_cc CALCULATED WITH x_t NEEDS TO BE a_t
-  open(3, file="omegas.dat", action="write")
+  ! SOMETHING WRONG
+  open(3, file="omegas1.dat", action="write")
+  open(5, file="omegas2.dat",action="write")
   do i=1, n_t
     rho_cc = 3*get_H(x_t(i))/(8*pi*G_grav)
 
@@ -108,12 +109,14 @@ subroutine initialize_time_mod
     rho_b = Omega_b*rho_c*exp(x_t(i))**-3
     rho_r = Omega_r*rho_c*exp(x_t(i))**-4
     rho_lambda = Omega_lambda*rho_c
-    write(3,*) rho_m/rho_cc, rho_m/rho_cc,rho_b/rho_cc!,rho_lambda/rho_cc
+    write(3,*) rho_m/rho_cc, rho_m/rho_cc
+    write(5,*) rho_b/rho_cc, rho_lambda/rho_cc
   end do
   close(3)
+  close(5)
 
   ! H values write - H(x), H(z)
-  ! THIS IS WRONG, INPUT x, NOT z
+  ! SOMETHING WRONG
   open(4, file="HxHz.dat", action="write")
   do i=1,n_t
     z = 1-exp(-x_t(i))
