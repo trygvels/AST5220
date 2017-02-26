@@ -52,7 +52,7 @@ subroutine initialize_time_mod
 
   do i = 2,n_t							! filling arrays
      if (i < n1 + 1) then
-        dx = (x_end_rec - x_start_rec)/(n1-1)
+        dx = (x_end_rec - x_start_rec)/(n1)
      else 
         dx = (x_0 - x_end_rec)/(n2-1)
      end if
