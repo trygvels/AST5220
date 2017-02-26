@@ -74,7 +74,7 @@ subroutine initialize_time_mod
 	end do
 
 ! Integrating for eta        
-	step =  abs(1.d-2*(x_eta(1)-x_eta(2)))      ! step length
+  step =  abs(1.d-2*(x_eta(1)-x_eta(2)))      ! step length
   eta(1) = eta_init                          ! initial value of et
 	do i = 2, n_eta
 		eta(i) = eta(i-1)
@@ -108,14 +108,14 @@ subroutine initialize_time_mod
     rho_b = Omega_b*rho_c*exp(x_t(i))**-3
     rho_r = Omega_r*rho_c*exp(x_t(i))**-4
     rho_lambda = Omega_lambda*rho_c
-    write(3,*) rho_m/rho_cc, rho_m/rho_cc,rho_b/rho_cc,rho_lambda/rho_cc
+    write(3,"(4F10.5)") rho_m/rho_cc, rho_m/rho_cc,rho_b/rho_cc,rho_lambda/rho_cc
   end do
   close(3)
 
   ! H values write - H(x), H(z)
   open(4, file="HxHz.dat", action="write")
   do i=1,n_t
-    z = 1/x_t(i) - 1
+    z = 1/exp(x_t(i)) - 1
     write(4,*) get_H(x_t(i)), z, get_H(z)
   end do
   close(4)  
