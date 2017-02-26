@@ -66,9 +66,10 @@ subroutine initialize_time_mod
   allocate(eta2(n_eta))
 
   dx = (x_eta2-x_eta1)/(n_eta-1)
+  write(*,*) dx
   x_eta(1) = x_eta1	  ! Uniformly spaced x-grid
   do i = 2, n_eta
-     x_eta(i) = x_eta(i-1) + dx
+     x_eta(i) = x_eta(i-1) - dx
   end do
 
 ! Integrating for eta        
@@ -92,7 +93,7 @@ subroutine initialize_time_mod
   ! Spline + Interplolation write to file
   open (2,file="etasplint.dat",action="write")
   do i=1,n_t
-     write (2,*) get_eta(x_eta(i)), x_t(i)
+     write (2,*) get_eta(x_t(i)), x_t(i)
   end do
   close(2)
 
@@ -171,7 +172,7 @@ subroutine initialize_time_mod
 
     real(dp), intent(in) :: x_in
     real(dp)             :: get_eta
-    get_eta =  splint(x_t, eta, eta2, x_in)
+    get_eta =  splint(x_eta, eta, eta2, x_in)
   end function get_eta
 
 
