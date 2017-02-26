@@ -104,9 +104,9 @@ subroutine initialize_time_mod
   do i=1, n_t
     rho_cc = 3*get_H(x_t(i))/(8*pi*G_grav)
 
-    rho_m = Omega_m*rho_c*exp(x_t(i))**-3
-    rho_b = Omega_b*rho_c*exp(x_t(i))**-3
-    rho_r = Omega_r*rho_c*exp(x_t(i))**-4
+    rho_m = Omega_m*rho_c*(x_t(i))**-3
+    rho_b = Omega_b*rho_c*(x_t(i))**-3
+    rho_r = Omega_r*rho_c*(x_t(i))**-4
     rho_lambda = Omega_lambda*rho_c
     write(3,*) rho_m/rho_cc, rho_m/rho_cc,rho_b/rho_cc!,rho_lambda/rho_cc
   end do
