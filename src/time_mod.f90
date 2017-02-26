@@ -100,22 +100,24 @@ subroutine initialize_time_mod
   close(2)
 
   ! Calculating Omegas
+  ! THIS IS WRONG rho_cc CALCULATED WITH x_t NEEDS TO BE a_t
   open(3, file="omegas.dat", action="write")
   do i=1, n_t
     rho_cc = 3*get_H(x_t(i))/(8*pi*G_grav)
 
-    rho_m = Omega_m*rho_c*(x_t(i))**-3
-    rho_b = Omega_b*rho_c*(x_t(i))**-3
-    rho_r = Omega_r*rho_c*(x_t(i))**-4
+    rho_m = Omega_m*rho_c*exp(x_t(i))**-3
+    rho_b = Omega_b*rho_c*exp(x_t(i))**-3
+    rho_r = Omega_r*rho_c*exp(x_t(i))**-4
     rho_lambda = Omega_lambda*rho_c
-    write(3,*) rho_m/rho_cc, rho_m/rho_cc,rho_b/rho_cc!,rho_lambda/rho_cc
+    write(3,*) rho_m/rho_c, rho_m/rho_c,rho_b/rho_c!,rho_lambda/rho_cc
   end do
   close(3)
 
   ! H values write - H(x), H(z)
+  ! THIS IS WRONG, INPUT x, NOT z
   open(4, file="HxHz.dat", action="write")
   do i=1,n_t
-    z = 1/exp(x_t(i)) - 1
+    z = 1/a_t(i) - 1
     write(4,*) get_H(x_t(i)), z, get_H(z)
   end do
   close(4)  
@@ -137,7 +139,7 @@ subroutine initialize_time_mod
 
     real(dp), intent(in) :: x
     real(dp)             :: get_H
-	get_H = H_0*sqrt((Omega_b+Omega_m)*exp(-3*x)+(Omega_r+Omega_nu)*exp(-4*x)+Omega_lambda)
+    get_H = H_0*sqrt((Omega_b+Omega_m)*exp(-3*x)+(Omega_r+Omega_nu)*exp(-4*x)+Omega_lambda)
   end function get_H
 
 
