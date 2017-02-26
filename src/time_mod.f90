@@ -52,7 +52,7 @@ subroutine initialize_time_mod
 
   do i = 2,n_t							! filling arrays
      if (i < n1 + 1) then
-        dx = (x_end_rec - x_start_rec)/(n1)
+        dx = (x_end_rec - x_start_rec)/(n1-1)
      else 
         dx = (x_0 - x_end_rec)/(n2-1)
      end if
@@ -92,7 +92,7 @@ subroutine initialize_time_mod
   ! Spline + Interplolation write to file
   open (2,file="etasplint.dat",action="write")
   do i=1,n_t
-     write (2,*) get_eta(x_eta(i)), x_t(i)
+     write (2,*) get_eta(x_t(i)), x_t(i)
   end do
   close(2)
 
@@ -171,7 +171,7 @@ subroutine initialize_time_mod
 
     real(dp), intent(in) :: x_in
     real(dp)             :: get_eta
-    get_eta =  splint(x_eta, eta, eta2, x_in)
+    get_eta =  splint(x_t, eta, eta2, x_in)
   end function get_eta
 
 
