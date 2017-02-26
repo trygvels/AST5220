@@ -4,7 +4,7 @@ from matplotlib import rc
 
 
 # Plotting splint
-file = open('splint.dat')
+file = open('etasplint.dat')
 lines = file.readlines()
 
 eta = np.zeros(len(lines))
@@ -16,7 +16,7 @@ for line in lines:
     x[i] = float(line[0])
     eta[i] = float(line[1])
     i += 1
-"""
+
 # Plotting omegas
 
 file = open('omegas.dat')
@@ -33,9 +33,9 @@ for line in lines:
     Om[i] = float(line[0])
     Ob[i] = float(line[1])
     Or[i] = float(line[2])
-    Ol[i] = float(line[3])
+    #Ol[i] = float(line[3])
     i += 1
-"""
+
 # Plotting Hx and Hz
 file = open('HxHz.dat')
 lines = file.readlines()
@@ -82,39 +82,38 @@ plt.tick_params(axis="both", which="both", bottom="off", top="off",
 plt.grid(b=True, which='minor', alpha=0.2)
 
 #------------------Plotting-----------------
-"""
+
 # Plotting omegas
-plt.title(r"/Omega")
-plt.xlabel(r"Percentage")
-plt.ylabel(r"x = log(a)")
-plt.plot(x,Om, tableau20[2])
-plt.plot(x,Ob,tableau20[4])
-plt.plot(x,Or,tableau20[6])
-plt.plot(x,Ol,tableau20[8])
+plt.title(r"$\Omega$")
+plt.ylabel(r"Percentage")
+plt.xlabel(r"x = log(a)")
+plt.plot(x,Om, color=tableau20[2])
+plt.plot(x,Ob, color=tableau20[4])
+plt.plot(x,Or, color=tableau20[6])
+#plt.plot(x,Ol, color=tableau20[8])
 fig.savefig('Omegas.pdf', bbox_inches='tight',pad_inches=0.106)
 plt.show()
-"""
 
 # Plotting conformal time
 plt.title(r"$\eta$",fontsize=12)
-plt.xlabel(r"$\eta$",fontsize=14)
-plt.ylabel(r"x = log(a)",fontsize=14)
+plt.ylabel(r"$\eta$ [meters]",fontsize=14)
+plt.xlabel(r"x = log(a)",fontsize=14)
 plt.plot(x,eta, color=tableau20[4])
 fig.savefig('Hx.pdf', bbox_inches='tight',pad_inches=0.106)
 plt.show()
 
 # Plotting Hx
 plt.title(r"H(x)",fontsize=12)
-plt.xlabel(r"H",fontsize=14)
-plt.ylabel(r"x = log(a)",fontsize=14)
+plt.ylabel(r"H",fontsize=14)
+plt.xlabel(r"x = log(a)",fontsize=14)
 plt.plot(x,Hx, color=tableau20[4])
 fig.savefig('Hx.pdf', bbox_inches='tight',pad_inches=0.106)
 plt.show()
 
 # Plotting Hz
-plt.title(r"Hz")
-plt.xlabel(r"H")
-plt.ylabel(r"z")
+plt.title(r"H(z)")
+plt.ylabel(r"H")
+plt.xlabel(r"z")
 plt.plot(z, Hz, color=tableau20[4])
 fig.savefig('Hz.pdf', bbox_inches='tight',pad_inches=0.106)
 plt.show()
