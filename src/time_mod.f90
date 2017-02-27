@@ -52,9 +52,9 @@ subroutine initialize_time_mod
 
   do i = 2,n_t							! filling arrays
      if (i < n1 + 1) then
-        dx = (x_end_rec - x_start_rec)/(n1)
+        dx = (x_end_rec - x_start_rec)/(n1-1)
      else 
-        dx = (x_0 - x_end_rec)/(n2)
+        dx = (x_0 - x_end_rec)/(n2-1)
      end if
      x_t(i) = x_t(i-1) + dx 
      a_t(i) = exp(x_t(i))
@@ -81,7 +81,7 @@ subroutine initialize_time_mod
   end do
   
   ! Write to file - Eta, x_eta
-  open(1, file="eta.dat", action="write")
+  open(1, file="eta.dat", action="write",status="replace")
   do i=1,n_eta
      write(1,*) eta(i), x_eta(i)
   end do
@@ -91,7 +91,7 @@ subroutine initialize_time_mod
   call spline(x_t, eta,yp1,ypn,eta2)
   
   ! Spline + Interplolation write to file
-  open (2,file="etasplint.dat",action="write")
+  open (2,file="etasplint.dat",action="write",status="replace")
   do i=1,n_t
      write (2,*) get_eta(x_t(i)), x_t(i)
   end do
@@ -99,8 +99,8 @@ subroutine initialize_time_mod
 
   ! Calculating Omegas
   ! SOMETHING WRONG
-  open(3, file="omegas1.dat", action="write")
-  open(5, file="omegas2.dat",action="write")
+  open(3, file="omegas1.dat", action="write",status="replace")
+  open(5, file="omegas2.dat",action="write",status="replace")
   do i=1, n_eta
     rho_cc = 3*get_H(x_eta(i))**2/(8*pi*G_grav)
 
@@ -116,7 +116,7 @@ subroutine initialize_time_mod
 
   ! H values write - H(x), H(z)
   ! SOMETHING WRONG
-  open(4, file="HxHz.dat", action="write")
+  open(4, file="HxHz.dat", action="write",status="replace")
   do i=1,n_eta
     z = 1-exp(-x_eta(i))
     write(4,*) get_H(x_eta(i)), z, get_H(log((1-z)**-1))
