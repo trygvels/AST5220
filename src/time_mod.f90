@@ -51,23 +51,24 @@ subroutine initialize_time_mod
   a_t(1) = exp(x_t(1))					! initial a
 
   do i = 2,n_t							! filling arrays
-     if (i < n1 + 1) then
-        dx = (x_end_rec - x_start_rec)/(n1-1)
+     if (i < n1 ) then
+        dx = (x_end_rec - x_start_rec)/(n1)
      else 
-        dx = (x_0 - x_end_rec)/(n2-1)
+        dx = (x_0 - x_end_rec)/(n2)
      end if
-     x_t(i) = x_t(i-1) + dx 
+     x_t(i) = x_end_rec + i*dx 
      a_t(i) = exp(x_t(i))
   end do
+
   ! Task: 1) Compute the conformal time at each eta time step
   !       2) Spline the resulting function, using the provided "spline" routine in spline_1D_mod.f90
   allocate(x_eta(n_eta))
   allocate(eta(n_eta))
   allocate(eta2(n_eta))
 
+  ! Constructing uniform x-grid with length 1000
   dx = (x_eta2-x_eta1)/(n_eta-1)
-  write(*,*) dx
-  x_eta(1) = x_eta1	  ! Uniformly spaced x-grid
+  x_eta(1) = x_eta1
   do i = 2, n_eta
      x_eta(i) = x_eta(i-1) + dx
   end do
