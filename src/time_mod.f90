@@ -56,7 +56,7 @@ subroutine initialize_time_mod
      else 
         dx = (x_0 - x_end_rec)/(n2)
      end if
-     x_t(i) = x_end_rec + i*dx 
+     x_t(i) = x_t(i-1) + dx 
      a_t(i) = exp(x_t(i))
   end do
 
@@ -132,7 +132,7 @@ subroutine initialize_time_mod
     real(dp), intent(in)                :: x
     real(dp), dimension(:), intent(in)  :: eta
     real(dp), dimension(:), intent(out) :: derivative
-    derivative = c/(exp(2*x)*get_H(x))
+    derivative = c/get_H_p(x)
     end subroutine derivs  
 
  ! Task: Write a function that computes H at given x
