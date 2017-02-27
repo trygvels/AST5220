@@ -108,8 +108,8 @@ subroutine initialize_time_mod
     rho_b = Omega_b*rho_c*exp(x_eta(i))**-3
     rho_r = Omega_r*rho_c*exp(x_eta(i))**-4
     rho_lambda = Omega_lambda*rho_c
-    write(3,*) rho_m/rho_cc, rho_m/rho_cc
-    write(5,*) rho_b/rho_cc, rho_lambda/rho_cc
+    write(3,*) rho_m/rho_cc, rho_b/rho_cc
+    write(5,*) rho_r/rho_cc, rho_lambda/rho_cc
   end do
   close(3)
   close(5)
