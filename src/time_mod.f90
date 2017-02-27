@@ -88,7 +88,7 @@ subroutine initialize_time_mod
   close(1)
  
   ! Splining eta
-  call spline(x_t, eta,yp1,ypn,eta2)
+  call spline(x_eta, eta,yp1,ypn,eta2)
   
   ! Spline + Interplolation write to file
   open (2,file="etasplint.dat",action="write",status="replace")
