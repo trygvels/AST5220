@@ -52,9 +52,9 @@ subroutine initialize_time_mod
 
   do i = 2,n_t							! filling arrays
      if (i < n1 + 1) then
-        dx = (x_end_rec - x_start_rec)/(n1-1)
+        dx = (x_end_rec - x_start_rec)/(n1)
      else 
-        dx = (x_0 - x_end_rec)/(n2-1)
+        dx = (x_0 - x_end_rec)/(n2)
      end if
      x_t(i) = x_t(i-1) + dx 
      a_t(i) = exp(x_t(i))
@@ -73,7 +73,7 @@ subroutine initialize_time_mod
   end do
 
 ! Integrating for eta        
-  step =  abs(1.d-2*(x_eta(1)-x_eta(2)))      ! step length
+  step =   abs(1.d-2*(x_eta(1)-x_eta(2)))      ! step length
   eta(1) = eta_init                          ! initial value of et
   do i = 2, n_eta
      eta(i) = eta(i-1)
@@ -102,7 +102,7 @@ subroutine initialize_time_mod
   open(3, file="omegas1.dat", action="write")
   open(5, file="omegas2.dat",action="write")
   do i=1, n_eta
-    rho_cc = 3*get_H(x_eta(i))/(8*pi*G_grav)
+    rho_cc = 3*get_H(x_eta(i))**2/(8*pi*G_grav)
 
     rho_m = Omega_m*rho_c*exp(x_eta(i))**-3
     rho_b = Omega_b*rho_c*exp(x_eta(i))**-3
@@ -131,7 +131,7 @@ subroutine initialize_time_mod
     real(dp), intent(in)                :: x
     real(dp), dimension(:), intent(in)  :: eta
     real(dp), dimension(:), intent(out) :: derivative
-    derivative = c/(get_H_p(x))
+    derivative = c/(exp(2*x)*get_H(x))
     end subroutine derivs  
 
  ! Task: Write a function that computes H at given x
