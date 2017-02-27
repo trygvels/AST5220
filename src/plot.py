@@ -4,17 +4,17 @@ from matplotlib import rc
 
 
 # Plotting splint
-file = open('eta.dat')
+file = open('etasplint.dat')
 lines = file.readlines()
 
-etas = np.zeros(len(lines))
-x = np.zeros(len(lines))
+etas = np.zeros(len(lines)) # length - 500
+x_t = np.zeros(len(lines)) # length - 500
 
 i = 0
 for line in lines:
     line = line.split()
-    x[i] = float(line[0])
-    etas[i] = float(line[1])
+    x_t[i] = float(line[1]) 
+    etas[i] = float(line[0]) 
     i += 1
 
 # Plotting splint
@@ -22,13 +22,13 @@ file = open('eta.dat')
 lines = file.readlines()
 
 eta = np.zeros(len(lines))
-x_t = np.zeros(len(lines))
+x = np.zeros(len(lines))
 
 i = 0
 for line in lines:
     line = line.split()
-    x_t[i] = float(line[0])
-    eta[i] = float(line[1])
+    x[i] = float(line[1]) #length - 1000
+    eta[i] = float(line[0]) #length - 1000
     i += 1
 
 # Plotting omegas
@@ -52,7 +52,6 @@ lines = file.readlines()
 
 Or = np.zeros(len(lines))
 Ol = np.zeros(len(lines))
-
 i = 0
 for line in lines:
     line = line.split()
@@ -64,9 +63,10 @@ for line in lines:
 file = open('HxHz.dat')
 lines = file.readlines()
 
-Hx = np.zeros(len(lines))
+Hx = np.zeros(len(lines)) #Length 1000
 z  = np.zeros(len(lines))
 Hz = np.zeros(len(lines))
+
 i=0
 for line in lines:
 	line  = line.split()
@@ -111,27 +111,31 @@ plt.grid(b=True, which='minor', alpha=0.2)
 plt.title(r"$\Omega$")
 plt.ylabel(r"Percentage")
 plt.xlabel(r"x = log(a)")
-plt.loglog(x,Om, color=tableau20[2])
-plt.loglog(x,Ob, color=tableau20[4])
-plt.loglog(x,Or, color=tableau20[6])
-plt.loglog(x,Ol, color=tableau20[8])
+plt.xlim(-23,0)
+plt.plot(x,Om, color=tableau20[2])
+plt.plot(x,Ob, color=tableau20[4])
+plt.plot(x,Or, color=tableau20[6])
+plt.plot(x,Ol, color=tableau20[8])
 fig.savefig('Omegas.pdf', bbox_inches='tight',pad_inches=0.106)
 plt.show()
 
+MPc= 3.085e22
 # Plotting conformal time
 plt.title(r"$\eta$",fontsize=12)
-plt.ylabel(r"$\eta$ [meters]",fontsize=14)
+plt.ylabel(r"$\eta$ [MPc]",fontsize=14)
 plt.xlabel(r"x = log(a)",fontsize=14)
-plt.plot(x_t,eta, color=tableau20[4])
-plt.plot(x,etas, color=tableau20[6])
+plt.xlim(-23,0)
+plt.semilogy(x_t,etas/MPc, "-o", color=tableau20[4])
+plt.semilogy(x,eta/MPc, color=tableau20[6])
 fig.savefig('Hx.pdf', bbox_inches='tight',pad_inches=0.106)
 plt.show()
-print eta - etas
+
 # Plotting Hx
 plt.title(r"H(x)",fontsize=12)
 plt.ylabel(r"H",fontsize=14)
 plt.xlabel(r"x = log(a)",fontsize=14)
-plt.semilogy(x,Hx, color=tableau20[4])
+plt.xlim(-23,0)
+plt.plot(x,Hx, color=tableau20[4])
 fig.savefig('Hx.pdf', bbox_inches='tight',pad_inches=0.106)
 plt.show()
 
@@ -139,6 +143,6 @@ plt.show()
 plt.title(r"H(z)")
 plt.ylabel(r"H")
 plt.xlabel(r"z")
-plt.semilogy(z, Hz, color=tableau20[4])
+plt.plot(z, Hz, color=tableau20[4])
 fig.savefig('Hz.pdf', bbox_inches='tight',pad_inches=0.106)
 plt.show()
