@@ -99,7 +99,6 @@ subroutine initialize_time_mod
   close(2)
 
   ! Calculating Omegas
-  ! SOMETHING WRONG
   open(3, file="omegas1.dat", action="write",status="replace")
   open(5, file="omegas2.dat",action="write",status="replace")
   do i=1, n_eta
@@ -116,7 +115,6 @@ subroutine initialize_time_mod
   close(5)
 
   ! H values write - H(x), H(z)
-  ! SOMETHING WRONG
   open(4, file="HxHz.dat", action="write",status="replace")
   do i=1,n_eta
     z = 1-exp(-x_eta(i))
