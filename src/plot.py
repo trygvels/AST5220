@@ -106,7 +106,7 @@ plt.tick_params(axis="both", which="both", bottom="off", top="off",
 plt.grid(b=True, which='minor', alpha=0.2)
 
 #------------------Plotting-----------------
-
+"""
 # Plotting omegas
 plt.title(r"Evolution of $\Omega$")
 plt.ylabel(r"$\Omega$")
@@ -116,9 +116,9 @@ plt.plot(x,Om,label=r"$\Omega_m$", color=tableau20[2])
 plt.plot(x,Ob,label=r"$\Omega_b$", color=tableau20[4])
 plt.plot(x,Or,label=r"$\Omega_r$", color=tableau20[6])
 plt.plot(x,Ol,label=r"$\Omega_{\lambda}$", color=tableau20[8])
-fig.savefig('Omegas.pdf', bbox_inches='tight',pad_inches=0.106)
 plt.legend(loc=6)
 plt.show()
+fig.savefig('Omegas.pdf', bbox_inches='tight',pad_inches=0.106)
 
 MPc= 3.085e22
 # Plotting conformal time
@@ -128,9 +128,9 @@ plt.xlabel(r"x = log(a)",fontsize=14)
 plt.xlim(-24,0)
 plt.semilogy(x_t,etas/MPc, "-o", label="Interpolated section", color=tableau20[4])
 plt.semilogy(x,eta/MPc, label="Conformal time", color=tableau20[6])
-fig.savefig('Hx.pdf', bbox_inches='tight',pad_inches=0.106)
 plt.legend(loc=7)
 plt.show()
+fig.savefig('Hx.pdf', bbox_inches='tight',pad_inches=0.106)
 
 # Plotting Hx
 plt.title(r"Hubble factor H(x) as a function of log(a)",fontsize=12)
@@ -138,15 +138,15 @@ plt.ylabel(r"H(x)",fontsize=14)
 plt.xlabel(r"x = log(a)",fontsize=14)
 plt.xlim(-24,0)
 plt.semilogy(x,Hx, color=tableau20[4])
-fig.savefig('Hx.pdf', bbox_inches='tight',pad_inches=0.106)
 plt.legend(loc=7)
 plt.show()
-
+fig.savefig('Hx.pdf', bbox_inches='tight',pad_inches=0.106)
+"""
 # Plotting Hz
 plt.title(r"Hubble factor H(z) as a function of redshift z")
 plt.ylabel(r"H(z)")
 plt.xlabel(r"z - redshift")
 plt.semilogy(z, Hz, color=tableau20[4])
-fig.savefig('Hz.pdf', bbox_inches='tight',pad_inches=0.106)
 plt.legend(loc=7)
 plt.show()
+fig.savefig('Hz.pdf', bbox_inches='tight',pad_inches=0.106)
