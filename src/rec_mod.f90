@@ -74,6 +74,12 @@ contains
        end if
     end do
 
+    ! Write to file - x_rec, X_e
+    open(1, file="Xe.dat", action="write",status="replace")
+    do i=1, n
+       write(1,*) x_rec(i), X_e(i)
+    end do
+    close(1)
 
     ! Task: Compute splined (log of) electron density function
 
