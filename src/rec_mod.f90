@@ -16,9 +16,9 @@ contains
 
   subroutine initialize_rec_mod
     implicit none
-    
+
     integer(i4b) :: i, j, k
-    real(dp)     :: saha_limit, y, T_b, n_b, dydx, xmin, xmax, dx, f, n_e0, X_e0, xstart, xstop
+    real(dp)     :: saha_limit, y, T_b, n_b, dydx, xmin, xmax, dx, f, n_e0, X_e0, xstart, xstop, yp1, ypn, eps, hmin
     logical(lgt) :: use_saha
     real(dp), allocatable, dimension(:) :: X_e ! Fractional electron density, n_e / n_H
 
@@ -27,6 +27,16 @@ contains
     xstop      = 0.d0         ! Stop  grids at a = 1
     n          = 1000         ! Number of grid points between xstart and xstopo
 
+
+    ! Spline variables
+    yp1 = 1.d30
+    ypn = 1.d30
+
+    ! Integration variables
+    eps = 1.d-10
+    hmin = 0.d0
+
+    ! Allocating arrays
     allocate(x_rec(n))
     allocate(X_e(n))
     allocate(tau(n))
@@ -38,20 +48,29 @@ contains
     allocate(g2(n))
     allocate(g22(n))
 
-    ! Task: Fill in x (rec) grid
+    ! Task: Fill in x (rec) grid - COMPLETE
+    dx = (xstop-xstart)/(n-1)
+    x_rec(1) = xstart
+    do i=2,n
+      x_rec(i) = x_rec(i-1) + dx
 
+    step = abs(1.d-2*(x_rec(1)-x_rec(2)) ! Step length for ODE
 
 
     ! Task: Compute X_e and n_e at all grid times
     use_saha = .true.
     do i = 1, n
+       n_b = Omega_b*rho_c/(m_H*exp(x_rec(i))**3)
        if (use_saha) then
           ! Use the Saha equation
-
+          T_b = T_0/exp(x_rec(i))
+          X_econst = ((m_e*T_b)/(2.d0*pi))**1.5d0*exp(-epsilon_0/T_b)/n_b
+          X_e(i) = (-X_econst + sqrt(X_econst**2 +4.d0*X_econst))/2.d0
           if (X_e(i) < saha_limit) use_saha = .false.
        else
           ! Use the Peebles equation
-
+          X_e(i) = X_e(i-1)
+          call odeint(X_e(i:i), x_rec(i-1), x_rec(i), eps, step, hmin, dX_edx, bsstep, output)
        end if
     end do
 
@@ -71,6 +90,31 @@ contains
 
 
   end subroutine initialize_rec_mod
+
+  ! Saha equation for integration
+  subroutine dX_edx(x, X_e, dydx)
+        use healpix_types
+        implicit none
+        real(dp),               intent(in)  :: x
+        real(dp), dimension(:), intent(in)  :: X_e
+        real(dp), dimension(:), intent(out) :: dydx
+        real(dp) :: T_b,n_b,phi2,alpha2,beta,beta2,n1s,lambda_alpha,C_r, Xe, a, H
+        Xe = X_e(1)
+        a  = exp(x)
+        H  = get_H(x)
+        T_b          = T_0/a
+        n_b          = Omega_b*rho_c/(m_H*a**3)
+
+        phi2         = 0.448d0*log(epsilon_0/(T_b))
+        alpha2       = 64.d0*pi/sqrt(27.d0*pi)*(alpha/m_e)**2*sqrt(epsilon_0/(
+        *T_b))*phi2
+        beta         = alpha2*((m_e*T_b)/(2.d0*pi))**1.5*exp(-epsilon_0/(T_b))
+        n1s          = (1.d0-Xe)*n_b
+        lambda_alpha = H*(3.d0*epsilon_0)**3/((8.d0*pi)**2*n1s)
+        C_r          = (lambda_2s1s + lambda_alpha)/(lambda_2s1s+lambda_alpha+beta2)
+        dydx         = C_r/H*(beta*(1.d0 - Xe) - n_b*alpha2*Xe**2)
+
+    end subroutine dX_edx
 
 
   ! Task: Complete routine for computing n_e at arbitrary x, using precomputed information
@@ -101,7 +145,7 @@ contains
 
   end function get_dtau
 
-  ! Task: Complete routine for computing the second derivative of tau at arbitrary x, 
+  ! Task: Complete routine for computing the second derivative of tau at arbitrary x,
   ! using precomputed information
   function get_ddtau(x)
     implicit none
