@@ -104,16 +104,16 @@ plt.tick_params(axis="both", which="both", bottom="off", top="off",
 plt.grid(b=True, which='minor', alpha=0.2)
 
 #------------------Plotting-----------------
-
+t = np.linspace(0,13.77,1000)
 # Plotting omegas
 plt.title(r"Evolution of $\Omega$")
 plt.ylabel(r"$\Omega$")
-plt.xlabel(r"a")
-#plt.xlim(-24,0)
-plt.plot(np.exp(x),Om,label=r"$\Omega_m$", color=tableau20[2])
-plt.plot(np.exp(x),Ob,label=r"$\Omega_b$", color=tableau20[4])
-plt.plot(np.exp(x),Or,label=r"$\Omega_r$", color=tableau20[6])
-plt.plot(np.exp(x),Ol,label=r"$\Omega_{\lambda}$", color=tableau20[8])
+plt.xlabel(r"Gyrs")
+plt.xlim(0,13.77)
+plt.plot(np.exp(x)*13.77,Om,label=r"$\Omega_m$", color=tableau20[2])
+plt.plot(np.exp(x)*13.77,Ob,label=r"$\Omega_b$", color=tableau20[4])
+plt.plot(np.exp(x)*13.77,Or,label=r"$\Omega_r$", color=tableau20[6])
+plt.plot(np.exp(x)*13.77,Ol,label=r"$\Omega_{\lambda}$", color=tableau20[8])
 plt.legend(loc=6)
 plt.show()
 fig.savefig('Omegas.pdf', bbox_inches='tight',pad_inches=0.106)
@@ -122,7 +122,7 @@ fig.savefig('Omegas.pdf', bbox_inches='tight',pad_inches=0.106)
 plt.title(r"Evolution of $\Omega$")
 plt.ylabel(r"$\Omega$")
 plt.xlabel(r"x = log(a)")
-#plt.xlim(-24,0)
+plt.xlim(-24,0)
 plt.plot(x,Om,label=r"$\Omega_m$", color=tableau20[2])
 plt.plot(x,Ob,label=r"$\Omega_b$", color=tableau20[4])
 plt.plot(x,Or,label=r"$\Omega_r$", color=tableau20[6])
@@ -130,7 +130,7 @@ plt.plot(x,Ol,label=r"$\Omega_{\lambda}$", color=tableau20[8])
 plt.legend(loc=6)
 plt.show()
 fig.savefig('OmegasLog.pdf', bbox_inches='tight',pad_inches=0.106)
-r"""
+"""
 MPc= 3.085e22
 # Plotting conformal time
 plt.title(r"Conformal time $\eta$ interpolated",fontsize=12)
