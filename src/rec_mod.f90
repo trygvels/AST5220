@@ -50,26 +50,26 @@ contains
     allocate(g(n))
     allocate(g2(n))
     allocate(g22(n))
-
     ! Task: Fill in x (rec) grid - COMPLETE
     dx = (xstop-xstart)/(n-1)
     x_rec(1) = xstart
     do i=2,n
       x_rec(i) = x_rec(i-1) + dx
-    step = abs(1.d-2*(x_rec(1)-x_rec(2))) ! Step length for ODE
     end do
-
+    step = abs(1.d-3*(x_rec(1)-x_rec(2))) ! Step length for ODE
+    write(*,*) x_rec
     ! Task: Compute X_e and n_e at all grid times
     use_saha = .true.
     do i = 1, n
        n_b = Omega_b*rho_c/(m_H*exp(x_rec(i))**3)
+
        if (use_saha) then
-          ! Use the Saha equation
+         ! Use the Saha equation
           T_b = T_0/exp(x_rec(i))
-          X_econst = ((m_e*T_b)/(2.d0*pi))**1.5d0*exp(-epsilon_0/T_b)/n_b
+          X_econst = ((m_e*k_b*T_b)/(2.d0*pi*hbar**2))**1.5d0*exp(-epsilon_0/(k_b*T_b))/n_b
           X_e(i) = (-X_econst + sqrt(X_econst**2 +4.d0*X_econst))/2.d0
-          if (X_e(i) < saha_limit) use_saha = .false.
-       else
+      if (X_e(i) < saha_limit) use_saha = .false.
+      else
           ! Use the Peebles equation
           X_e(i) = X_e(i-1)
           call odeint(X_e(i:i), x_rec(i-1), x_rec(i), eps, step, hmin, dX_edx, bsstep, output)
@@ -113,13 +113,27 @@ contains
         T_b          = T_0/a
         n_b          = Omega_b*rho_c/(m_H*a**3)
 
-        phi2         = 0.448d0*log(epsilon_0/(T_b))
-        alpha2       = 64.d0*pi/sqrt(27.d0*pi)*(alpha/m_e)**2*sqrt(epsilon_0/T_b)*phi2
-        beta         = alpha2*(m_e*T_b/(2.d0*pi))**1.5*exp(-epsilon_0/T_b)
+        phi2         = 0.448d0*log(epsilon_0/(k_b*T_b))
+        alpha2       = 64.d0*pi/sqrt(27.d0*pi)*(alpha/m_e)**2*sqrt(epsilon_0/(k_b*T_b))*phi2 *hbar**2/c
+        beta         = alpha2 *((m_e*k_b*T_b)/(2.d0*pi*hbar**2))**1.5*exp(-epsilon_0/(k_b*T_b))
+
+        !This part is needed since the exponent
+        !in beta2 becomes so large that the computer
+        !sets it to infinity. However beta goes to zero before that
+        !so it should be 0 even if the exponent is enormous.
+        if(T_b <= 169.d0) then
+            beta2    = 0.d0
+        else
+            beta2    = beta*exp((3.d0*epsilon_0)/(4.d0*k_b*T_b))
+        end if
+
         n1s          = (1.d0-Xe)*n_b
-        lambda_alpha = H*(3.d0*epsilon_0)**3/((8.d0*pi)**2*n1s)
-        C_r          = (lambda_2s1s + lambda_alpha)/(lambda_2s1s+lambda_alpha+beta2)
-        dydx         = C_r/H*(beta*(1.d0 - Xe) - n_b*alpha2*Xe**2)
+        lambda_alpha = H*(3.d0*epsilon_0)**3/((8.d0*pi)**2*n1s) /(c*hbar)**3
+
+
+
+        C_r          = (lambda_2s1s +lambda_alpha)/(lambda_2s1s+lambda_alpha+beta2)
+        dydx         = C_r/H*(beta*(1.d0-Xe)- n_b*alpha2*Xe**2)
 
     end subroutine dX_edx
 

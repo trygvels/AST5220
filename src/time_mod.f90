@@ -31,7 +31,7 @@ subroutine initialize_time_mod
   x_start_rec = -log(1.d0 + z_start_rec)  ! x of start of recombination
   x_end_rec   = -log(1.d0 + z_end_rec)    ! x of end of recombination
   x_0         = 0.d0                      ! x today
-  
+
   n_eta       = 1000                      ! Number of eta grid points (for spline)
   a_init      = 1.d-10                    ! Start value of a for eta evaluation
   x_eta1      = log(a_init)               ! Start value of x for eta evaluation
@@ -53,10 +53,10 @@ subroutine initialize_time_mod
   do i = 2,n_t							! filling arrays
      if (i < n1 ) then
         dx = (x_end_rec - x_start_rec)/(n1)
-     else 
+     else
         dx = (x_0 - x_end_rec)/(n2)
      end if
-     x_t(i) = x_t(i-1) + dx 
+     x_t(i) = x_t(i-1) + dx
      a_t(i) = exp(x_t(i))
   end do
 
@@ -73,14 +73,14 @@ subroutine initialize_time_mod
      x_eta(i) = x_eta(i-1) + dx
   end do
 
-! Integrating for eta        
+! Integrating for eta
   step =   abs(1.d-2*(x_eta(1)-x_eta(2)))      ! step length
   eta(1) = eta_init                          ! initial value of et
   do i = 2, n_eta
      eta(i) = eta(i-1)
-     call odeint(eta(i:i), x_eta(i-1),x_eta(i), eps, step, stepmin, derivs, bsstep, output) 	
+     call odeint(eta(i:i), x_eta(i-1),x_eta(i), eps, step, stepmin, derivs, bsstep, output)
   end do
-  
+
   ! Write to file - Eta, x_eta
   open(1, file="eta.dat", action="write",status="replace")
   do i=1,n_eta
@@ -90,7 +90,7 @@ subroutine initialize_time_mod
  
   ! Splining eta
   call spline(x_eta, eta,yp1,ypn,eta2)
-  
+
   ! Spline + Interplolation write to file
   open (2,file="etasplint.dat",action="write",status="replace")
   do i=1,n_t
@@ -120,7 +120,7 @@ subroutine initialize_time_mod
     z = 1-exp(-x_eta(i))
     write(4,*) get_H(x_eta(i)), z, get_H(log((1-z)**-1))
   end do
-  close(4)  
+  close(4)
   end subroutine initialize_time_mod
 
 ! dnu/dx=c/H_p
@@ -131,7 +131,7 @@ subroutine initialize_time_mod
     real(dp), dimension(:), intent(in)  :: eta
     real(dp), dimension(:), intent(out) :: derivative
     derivative = c/get_H_p(x)
-    end subroutine derivs  
+    end subroutine derivs
 
  ! Task: Write a function that computes H at given x
   function get_H(x)
