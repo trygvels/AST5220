@@ -31,7 +31,7 @@ plt.tick_params(axis="both", which="both", bottom="off", top="off",
 plt.grid(b=True, which='minor', alpha=0.2)
 
 #------------------Plotting-----------------
-x, Xe = np.loadtxt("Xe.dat")
+x, Xe = np.loadtxt("Xe.dat", unpack=True)
 
 # Plotting omegas
 plt.title(r"X_e")
