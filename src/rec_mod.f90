@@ -29,10 +29,10 @@ contains
     saha_limit = 0.99d0       ! Switch from Saha to Peebles when X_e < 0.99
     xstart     = log(1.d-10)  ! Start grids at a = 10^-10
     xstop      = 0.d0         ! Stop  grids at a = 1
-    n          = 1000         ! Number of grid points between xstart and xstopo
-    n1         = 500          ! Grid points before revombination
+    n1         = 300          ! Grid points before revombination
     n2         = 200          ! Grid points before revombination
     n3         = 300          ! Grid points before revombination
+    n          = n1+n2+n3         ! Number of grid points between xstart and xstopo
     z_start_rec = 1630.4d0                  ! Redshift of start of recombination
     z_end_rec   = 614.2d0                   ! Redshift of end of recombination
     z_0         = 0.d0                      ! Redshift today
