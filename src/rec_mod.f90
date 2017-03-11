@@ -18,7 +18,10 @@ contains
     implicit none
 
     integer(i4b) :: i, j, k
-    real(dp)     :: saha_limit, y, T_b, n_b, dydx, xmin, xmax, dx, f, n_e0, X_e0, xstart, xstop, yp1, ypn, eps, hmin
+    real(dp)     :: saha_limit, y, T_b, n_b, dydx, xmin, xmax, dx
+    real(dp)     :: f, n_e0, X_e0, xstart, xstop, yp1, ypn, eps, hmin, step
+    real(dp)     :: X_econst, C_r
+
     logical(lgt) :: use_saha
     real(dp), allocatable, dimension(:) :: X_e ! Fractional electron density, n_e / n_H
 
@@ -53,9 +56,8 @@ contains
     x_rec(1) = xstart
     do i=2,n
       x_rec(i) = x_rec(i-1) + dx
-
-    step = abs(1.d-2*(x_rec(1)-x_rec(2)) ! Step length for ODE
-
+    step = abs(1.d-2*(x_rec(1)-x_rec(2))) ! Step length for ODE
+    end do
 
     ! Task: Compute X_e and n_e at all grid times
     use_saha = .true.
@@ -112,9 +114,8 @@ contains
         n_b          = Omega_b*rho_c/(m_H*a**3)
 
         phi2         = 0.448d0*log(epsilon_0/(T_b))
-        alpha2       = 64.d0*pi/sqrt(27.d0*pi)*(alpha/m_e)**2*sqrt(epsilon_0/(
-        *T_b))*phi2
-        beta         = alpha2*((m_e*T_b)/(2.d0*pi))**1.5*exp(-epsilon_0/(T_b))
+        alpha2       = 64.d0*pi/sqrt(27.d0*pi)*(alpha/m_e)**2*sqrt(epsilon_0/T_b)*phi2
+        beta         = alpha2*(m_e*T_b/(2.d0*pi))**1.5*exp(-epsilon_0/T_b)
         n1s          = (1.d0-Xe)*n_b
         lambda_alpha = H*(3.d0*epsilon_0)**3/((8.d0*pi)**2*n1s)
         C_r          = (lambda_2s1s + lambda_alpha)/(lambda_2s1s+lambda_alpha+beta2)
