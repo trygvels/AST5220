@@ -20,7 +20,8 @@ contains
     integer(i4b) :: i, j, k
     real(dp)     :: saha_limit, y, T_b, n_b, dydx, xmin, xmax, dx
     real(dp)     :: f, n_e0, X_e0, xstart, xstop, yp1, ypn, eps, hmin, step
-    real(dp)     :: X_econst, C_r
+    real(dp)     :: X_econst, C_r, n1,n2,n3
+    real(dp)     :: z_start_rec,z_end_rec,z_0,x_start_rec,x_end_rec,x_0
 
     logical(lgt) :: use_saha
     real(dp), allocatable, dimension(:) :: X_e ! Fractional electron density, n_e / n_H
@@ -29,7 +30,15 @@ contains
     xstart     = log(1.d-10)  ! Start grids at a = 10^-10
     xstop      = 0.d0         ! Stop  grids at a = 1
     n          = 1000         ! Number of grid points between xstart and xstopo
-
+    n1         = 500          ! Grid points before revombination
+    n2         = 200          ! Grid points before revombination
+    n3         = 300          ! Grid points before revombination
+    z_start_rec = 1630.4d0                  ! Redshift of start of recombination
+    z_end_rec   = 614.2d0                   ! Redshift of end of recombination
+    z_0         = 0.d0                      ! Redshift today
+    x_start_rec = -log(1.d0 + z_start_rec)  ! x of start of recombination
+    x_end_rec   = -log(1.d0 + z_end_rec)    ! x of end of recombination
+    x_0         = 0.d0                      ! x today
 
     ! Spline variables
     yp1 = 1.d30
@@ -50,14 +59,22 @@ contains
     allocate(g(n))
     allocate(g2(n))
     allocate(g22(n))
+
     ! Task: Fill in x (rec) grid - COMPLETE
-    dx = (xstop-xstart)/(n-1)
-    x_rec(1) = xstart
-    do i=2,n
-      x_rec(i) = x_rec(i-1) + dx
+    x_rec(1) = xstart 					! initial x
+
+    do i = 2,n
+       if (i < n1 ) then
+          dx = (x_start_rec-xstart)/(n1-1)
+       else if (i<n2) then
+          dx = (x_end_rec - x_start_rec)/(n2)
+       else
+          dx = (x_0 - x_end_rec)/(n3)
+       end if
+       x_rec(i) = x_rec(i-1) + dx
     end do
+
     step = abs(1.d-3*(x_rec(1)-x_rec(2))) ! Step length for ODE
-    write(*,*) x_rec
     ! Task: Compute X_e and n_e at all grid times
     use_saha = .true.
     do i = 1, n
