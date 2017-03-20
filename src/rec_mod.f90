@@ -9,9 +9,8 @@ module rec_mod
   integer(i4b),                        private :: n                 ! Number of grid points
   real(dp), allocatable, dimension(:), private :: x_rec             ! Grid
   real(dp), allocatable, dimension(:), private :: tau, tau2, tau22  ! Splined tau and second derivatives
-  real(dp), allocatable, dimension(:), private :: n_e, n_e2         ! Splined (log of) electron density, n_e
+  real(dp), allocatable, dimension(:), private :: n_e, n_e2, logn_e, logn_e2         ! Splined (log of) electron density, n_e
   real(dp), allocatable, dimension(:), private :: g, g2, g22        ! Splined visibility function
-
 contains
 
   subroutine initialize_rec_mod
@@ -47,6 +46,8 @@ contains
     allocate(tau22(n))
     allocate(n_e(n))
     allocate(n_e2(n))
+    allocate(logn_e(n))
+    allocate(logn_e2(n))
     allocate(g(n))
     allocate(g2(n))
     allocate(g22(n))
@@ -87,7 +88,15 @@ contains
     close(1)
 
     ! Task: Compute splined (log of) electron density function
-    call spline(log(n_e), eta,yp1,ypn,n_e2) !n_e2 is now log
+    logn_e = log(n_e)
+    call spline(logn_e, eta,yp1,ypn,logn_e2) !n_e2 is now log
+
+    ! Write to file - electron density
+    open(3, file="neLog.dat", action="write",status="replace")
+    do i=1, n
+       write(3,*) log(n_e(i)), n_e2(i)
+    end do
+    close(3)
 
     ! Task: Compute optical depth at all grid points
     tau(n) = 0.d0
@@ -95,13 +104,13 @@ contains
       tau(i) = tau(i+1)
       call odeint(tau(i:i),x_rec(i+1),x_rec(i),eps,step,hmin,dtaudx,bsstep,output)
     end do
-
+    write(*,*) tau
     ! Task: Compute splined (log of) optical depth
     call spline(x_rec, tau, yp1, ypn,tau2)
     ! Task: Compute splined second derivative of (log of) optical depth
     call spline(x_rec,tau2,yp1,ypn,tau22)
 
-    ! Write to file - x_rec, X_e
+    ! Write to file - taus
     open(2, file="tau.dat", action="write",status="replace")
     do i=1, n
        write(2,*) tau(i),tau2(i),tau22(i)
@@ -162,14 +171,14 @@ contains
     end subroutine dtaudx
 
 
-  ! Task: Complete routine for computing n_e at arbitrary x, using precomputed information
-  ! Hint: Remember to exponentiate...
-  function get_n_e(x)
-    implicit none
-
-    real(dp), intent(in) :: x
-    real(dp)             :: get_n_e
-
+  ! Complete routine for computing n_e at arbitrary x, using precomputed information
+  function get_n_e(x_in)
+      implicit none
+      real(dp), intent(in) :: x_in
+      real(dp)             :: get_n_e
+      !Spline integration with precalculated logarithmic values
+      get_n_e = splint(x_rec, n_e, n_e2, x_in)
+      !get_n_e = exp(get_n_e)
   end function get_n_e
 
   ! Task: Complete routine for computing tau at arbitrary x, using precomputed information
