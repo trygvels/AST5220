@@ -29,16 +29,11 @@ contains
     saha_limit = 0.99d0       ! Switch from Saha to Peebles when X_e < 0.99
     xstart     = log(1.d-10)  ! Start grids at a = 10^-10
     xstop      = 0.d0         ! Stop  grids at a = 1
-    n1         = 300          ! Grid points before revombination
-    n2         = 200          ! Grid points before revombination
-    n3         = 300          ! Grid points before revombination
-    n          = n1+n2+n3         ! Number of grid points between xstart and xstopo
-    z_start_rec = 1630.4d0                  ! Redshift of start of recombination
-    z_end_rec   = 614.2d0                   ! Redshift of end of recombination
-    z_0         = 0.d0                      ! Redshift today
-    x_start_rec = -log(1.d0 + z_start_rec)  ! x of start of recombination
-    x_end_rec   = -log(1.d0 + z_end_rec)    ! x of end of recombination
-    x_0         = 0.d0                      ! x today
+    n          = 1000         ! Number of grid points between xstart and xstopo
+    saha_limit = 0.99d0       ! Switch from Saha to Peebles when X_e < 0.99
+    xstart     = log(1.d-10)  ! Start grids at a = 10^-10
+    xstop      = 0.d0         ! Stop  grids at a = 1
+    n          = 1000         ! Number of grid points between xstart and xstopo
 
     ! Spline variables
     yp1 = 1.d30
@@ -47,12 +42,6 @@ contains
     ! Integration variables
     eps = 1.d-10
     hmin = 0.d0
-
-    ! Test
-    saha_limit = 0.99d0       ! Switch from Saha to Peebles when X_e < 0.99
-    xstart     = log(1.d-10)  ! Start grids at a = 10^-10
-    xstop      = 0.d0         ! Stop  grids at a = 1
-    n          = 1000         ! Number of grid points between xstart and xstopo
 
 
     ! Allocating arrays
@@ -67,26 +56,16 @@ contains
     allocate(g2(n))
     allocate(g22(n))
 
-    ! Task: Fill in x (rec) grid - COMPLETE. Varying resolution
-    !x_rec(1) = xstart 					! initial x
-    !do i = 2,n
-    !   if (i < n1 ) then
-    !      dx = (x_start_rec-xstart)/(n1-1)
-    !   else if (i<n2) then
-    !      dx = (x_end_rec - x_start_rec)/(n2)
-    !   else
-    !      dx = (x_0 - x_end_rec)/(n3)
-    !   end if
-    !   x_rec(i) = x_rec(i-1) + dx
-    !end do
-    ! Task: Fill in x (rec) grid - COMPLETE
+    ! Uniform x-grid with 1000 points
     dx = (xstop-xstart)/(n-1)
     x_rec(1) = xstart
     do i=2,n
       x_rec(i) = x_rec(i-1) + dx
     end do
+
     step = abs(1.d-3*(x_rec(1)-x_rec(2))) ! Step length for ODE
-    ! Task: Compute X_e and n_e at all grid times
+
+    ! Compute X_e and n_e at all grid times
     use_saha = .true.
     do i = 1, n
        n_b = Omega_b*rho_c/(m_H*exp(x_rec(i))**3)
