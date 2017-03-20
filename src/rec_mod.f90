@@ -48,6 +48,13 @@ contains
     eps = 1.d-10
     hmin = 0.d0
 
+    ! Test
+    saha_limit = 0.99d0       ! Switch from Saha to Peebles when X_e < 0.99
+    xstart     = log(1.d-10)  ! Start grids at a = 10^-10
+    xstop      = 0.d0         ! Stop  grids at a = 1
+    n          = 1000         ! Number of grid points between xstart and xstopo
+
+
     ! Allocating arrays
     allocate(x_rec(n))
     allocate(X_e(n))
@@ -60,20 +67,24 @@ contains
     allocate(g2(n))
     allocate(g22(n))
 
+    ! Task: Fill in x (rec) grid - COMPLETE. Varying resolution
+    !x_rec(1) = xstart 					! initial x
+    !do i = 2,n
+    !   if (i < n1 ) then
+    !      dx = (x_start_rec-xstart)/(n1-1)
+    !   else if (i<n2) then
+    !      dx = (x_end_rec - x_start_rec)/(n2)
+    !   else
+    !      dx = (x_0 - x_end_rec)/(n3)
+    !   end if
+    !   x_rec(i) = x_rec(i-1) + dx
+    !end do
     ! Task: Fill in x (rec) grid - COMPLETE
-    x_rec(1) = xstart 					! initial x
-
-    do i = 2,n
-       if (i < n1 ) then
-          dx = (x_start_rec-xstart)/(n1-1)
-       else if (i<n2) then
-          dx = (x_end_rec - x_start_rec)/(n2)
-       else
-          dx = (x_0 - x_end_rec)/(n3)
-       end if
-       x_rec(i) = x_rec(i-1) + dx
+    dx = (xstop-xstart)/(n-1)
+    x_rec(1) = xstart
+    do i=2,n
+      x_rec(i) = x_rec(i-1) + dx
     end do
-
     step = abs(1.d-3*(x_rec(1)-x_rec(2))) ! Step length for ODE
     ! Task: Compute X_e and n_e at all grid times
     use_saha = .true.
@@ -129,9 +140,8 @@ contains
         H  = get_H(x)
         T_b          = T_0/a
         n_b          = Omega_b*rho_c/(m_H*a**3)
-
         phi2         = 0.448d0*log(epsilon_0/(k_b*T_b))
-        alpha2       = 64.d0*pi/sqrt(27.d0*pi)*(alpha/m_e)**2*sqrt(epsilon_0/(k_b*T_b))*phi2 *hbar**2/c
+        alpha2       = 64.d0*pi/sqrt(27.d0*pi)*(alpha/m_e)**2*sqrt(epsilon_0/(k_b*T_b))*phi2*hbar**2/c
         beta         = alpha2 *((m_e*k_b*T_b)/(2.d0*pi*hbar**2))**1.5*exp(-epsilon_0/(k_b*T_b))
 
         !This part is needed since the exponent
@@ -146,9 +156,6 @@ contains
 
         n1s          = (1.d0-Xe)*n_b
         lambda_alpha = H*(3.d0*epsilon_0)**3/((8.d0*pi)**2*n1s) /(c*hbar)**3
-
-
-
         C_r          = (lambda_2s1s +lambda_alpha)/(lambda_2s1s+lambda_alpha+beta2)
         dydx         = C_r/H*(beta*(1.d0-Xe)- n_b*alpha2*Xe**2)
 
