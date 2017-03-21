@@ -33,7 +33,7 @@ plt.grid(b=True, which='minor', alpha=0.2)
 #------------------Plotting-----------------
 x, Xe = np.loadtxt("Xe.dat", unpack=True)
 """
-# Plotting omegas
+# Plotting X_e
 plt.title(r"$X_e$")
 plt.ylabel(r"$X_e$")
 plt.xlabel(r"z")
@@ -44,14 +44,30 @@ plt.legend(loc=6)
 plt.show()
 fig.savefig('Xe.pdf', bbox_inches='tight',pad_inches=0.106)
 """
+
 tau, tau2, tau22 = np.loadtxt("tau.dat", unpack=True)
-# Plotting omegas
+"""
+# Plotting Tau
 plt.title(r"$\tau$")
 plt.ylabel(r"$\tau$")
 plt.xlabel(r"z")
 plt.xlim(1800,0)
+plt.ylim(1e-8,1e2)
 z = 1/np.exp(x)-1
 plt.semilogy(z, tau,label=r"$\tau$", color=tableau20[2])
+#plt.legend(loc=6)
+plt.show()
+#fig.savefig('tau.pdf', bbox_inches='tight',pad_inches=0.106)
+"""
+
+g,g2,g22 = np.loadtxt("g.dat", unpack=True)
+# Plotting g
+plt.title(r"$g$")
+plt.ylabel(r"$g$")
+plt.xlabel(r"z")
+plt.xlim(1800,0)
+z = 1/np.exp(x)-1
+plt.plot(z, g,label=r"$\tau$", color=tableau20[2])
 #plt.legend(loc=6)
 plt.show()
 #fig.savefig('tau.pdf', bbox_inches='tight',pad_inches=0.106)
