@@ -52,7 +52,7 @@ subroutine initialize_time_mod
 
   do i = 2,n_t							! filling arrays
      if (i < n1 ) then
-        dx = (x_end_rec - x_start_rec)/(n1)
+        dx = (x_end_rec - x_start_rec)/(n1-1) !Fixed from M1
      else
         dx = (x_0 - x_end_rec)/(n2)
      end if
@@ -87,7 +87,7 @@ subroutine initialize_time_mod
      write(1,*) eta(i), x_eta(i)
   end do
   close(1)
- 
+
   ! Splining eta
   call spline(x_eta, eta,yp1,ypn,eta2)
 
