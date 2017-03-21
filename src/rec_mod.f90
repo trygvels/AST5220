@@ -128,7 +128,7 @@ contains
 
     ! Computing g
     do i=1,n
-      g(i) = -dtaudx(x_rec(i),tau(i),dydx)*exp(-tau(i)) ! CHECK THIS
+      g(i) = -get_dtau(x_rec(i))*exp(-tau(i)) ! CHECK THIS
     end do
     !  Compute splined visibility function
     call spline(x_rec,g,yp1,ypn,g2)
@@ -216,18 +216,29 @@ contains
 
   !  Complete routine for computing the derivative of tau at arbitrary x,
   ! using precomputed information
+  !function get_dtau(x)
+  !  implicit none
+
+  !  real(dp), intent(in) :: x
+  !  real(dp)             :: get_dtau
+
+  !  !n_e  = get_n_e(x)
+  !  !H    = get_H(x)
+  !  !dydx = -n_e*sigma_T/H*c
+  !  get_dtau =  splint_deriv(x_rec, tau, tau2, x) !LOOK
+  !end function get_dtau
+
+  !TEST##################
   function get_dtau(x)
-    implicit none
-
-    real(dp), intent(in) :: x
-    real(dp)             :: get_dtau
-
-    !n_e  = get_n_e(x)
-    !H    = get_H(x)
-    !dydx = -n_e*sigma_T/H*c
-    get_dtau =  splint_deriv(x_rec, tau, tau2, x) !LOOK
-  end function get_dtau
-
+       implicit none
+       real(dp), intent(in) :: x
+       real(dp)             :: get_dtau
+       real(dp)             :: n_e,H_p
+       H_p = get_H_p(x)
+       n_e = get_n_e(x)
+       get_dtau = -n_e*sigma_T*exp(x)*c/H_p!splint_deriv(x_rec,tau_rec,ddtau_rec,x_in)
+   end function get_dtau
+   !TEST##################
   ! : Complete routine for computing the second derivative of tau at arbitrary x,
   ! using precomputed information
   function get_ddtau(x)
