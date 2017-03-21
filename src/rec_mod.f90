@@ -9,7 +9,7 @@ module rec_mod
   integer(i4b),                        private :: n                 ! Number of grid points
   real(dp), allocatable, dimension(:), private :: x_rec             ! Grid
   real(dp), allocatable, dimension(:), private :: tau, tau2, tau22  ! Splined tau and second derivatives
-  real(dp), allocatable, dimension(:), private :: n_e, n_e2         ! Splined (log of) electron density, n_e
+  real(dp), allocatable, dimension(:), private :: n_e, n_e2, logn_e, logn_e2        ! Splined (log of) electron density, n_e
   real(dp), allocatable, dimension(:), private :: g, g2, g22        ! Splined visibility function
 contains
 
@@ -51,6 +51,9 @@ contains
     allocate(g(n))
     allocate(g2(n))
     allocate(g22(n))
+
+    allocate(logn_e(n))
+    allocate(logn_e2(n))
 
     !---------------------- Time-grid ----------------------
 
@@ -94,7 +97,8 @@ contains
     !---------------------- Electron density ----------------------
 
     !  Compute splined (log of) electron density function
-    n_e = log(n_e)
+    logn_e = log(n_e)
+    call spline(logn_e, eta,yp1,ypn,logn_e2)
     call spline(n_e, eta,yp1,ypn,n_e2) !n_e2 is now log
 
     ! Write to file - electron density
@@ -129,6 +133,7 @@ contains
     ! Computing g
     do i=1,n
       g(i) = -get_dtau(x_rec(i))*exp(-tau(i)) ! CHECK THIS
+      write(*,*) get_dtau(x_rec(i)), tau(i)
     end do
     !  Compute splined visibility function
     call spline(x_rec,g,yp1,ypn,g2)
