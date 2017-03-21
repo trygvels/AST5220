@@ -9,7 +9,7 @@ module rec_mod
   integer(i4b),                        private :: n                 ! Number of grid points
   real(dp), allocatable, dimension(:), private :: x_rec             ! Grid
   real(dp), allocatable, dimension(:), private :: tau, tau2, tau22  ! Splined tau and second derivatives
-  real(dp), allocatable, dimension(:), private :: n_e, n_e2, logn_e, logn_e2        ! Splined (log of) electron density, n_e
+  real(dp), allocatable, dimension(:), private :: n_e, n_e2, logn_e, logn_e2         ! Splined (log of) electron density, n_e
   real(dp), allocatable, dimension(:), private :: g, g2, g22        ! Splined visibility function
 contains
 
@@ -23,7 +23,6 @@ contains
 
     logical(lgt) :: use_saha
     real(dp), allocatable, dimension(:) :: X_e ! Fractional electron density, n_e / n_H
-    real(dp), allocatable, dimension(:) :: dtau ! Fractional electron density, n_e / n_H
 
     saha_limit = 0.99d0       ! Switch from Saha to Peebles when X_e < 0.99
     xstart     = log(1.d-10)  ! Start grids at a = 10^-10
@@ -43,19 +42,15 @@ contains
     allocate(x_rec(n))
     allocate(X_e(n))
     allocate(tau(n))
-    allocate(dtau(n))
     allocate(tau2(n))
     allocate(tau22(n))
     allocate(n_e(n))
     allocate(n_e2(n))
+    allocate(logn_e(n))
+    allocate(logn_e2(n))
     allocate(g(n))
     allocate(g2(n))
     allocate(g22(n))
-
-    allocate(logn_e(n))
-    allocate(logn_e2(n))
-
-    !---------------------- Time-grid ----------------------
 
     ! Uniform x-grid with 1000 points
     dx = (xstop-xstart)/(n-1)
@@ -65,8 +60,6 @@ contains
     end do
 
     step = abs(1.d-3*(x_rec(1)-x_rec(2))) ! Step length for ODE
-
-    !---------------------- X_e calculation ----------------------
 
     ! Compute X_e and n_e at all grid times
     use_saha = .true.
@@ -94,62 +87,43 @@ contains
     end do
     close(1)
 
-    !---------------------- Electron density ----------------------
-
-    !  Compute splined (log of) electron density function
+    ! Task: Compute splined (log of) electron density function
     logn_e = log(n_e)
-    call spline(logn_e, eta,yp1,ypn,logn_e2)
-    call spline(n_e, eta,yp1,ypn,n_e2) !n_e2 is now log
+    call spline(logn_e, eta,yp1,ypn,logn_e2) !n_e2 is now log
 
     ! Write to file - electron density
-    open(2, file="neLog.dat", action="write",status="replace")
+    open(3, file="neLog.dat", action="write",status="replace")
     do i=1, n
-       write(2,*) n_e(i), n_e2(i)
+       write(3,*) log(n_e(i)), n_e2(i)
     end do
-    close(2)
+    close(3)
 
-    ! ---------------------- Optical depth ----------------------
-
-    !  Compute optical depth at all grid points
+    ! Task: Compute optical depth at all grid points
     tau(n) = 0.d0
     do i=n-1,1,-1
       tau(i) = tau(i+1)
       call odeint(tau(i:i),x_rec(i+1),x_rec(i),eps,step,hmin,dtaudx,bsstep,output)
     end do
-    ! Compute splined (log of) optical depth
+    write(*,*) tau
+    ! Task: Compute splined (log of) optical depth
     call spline(x_rec, tau, yp1, ypn,tau2)
-    ! Compute splined second derivative of (log of) optical depth
-    call spline(x_rec,tau2,yp1,ypn,tau22) ! Second derivative of second derivative
+    ! Task: Compute splined second derivative of (log of) optical depth
+    call spline(x_rec,tau2,yp1,ypn,tau22)
 
     ! Write to file - taus
-    open(3, file="tau.dat", action="write",status="replace")
+    open(2, file="tau.dat", action="write",status="replace")
     do i=1, n
-       write(3,*) tau(i),tau2(i),tau22(i)
+       write(2,*) tau(i),tau2(i),tau22(i)
     end do
-    close(3)
+    close(2)
 
-    !---------------------- Visibility function ----------------------
+    ! Task: Compute splined visibility function
+    ! Task: Compute splined second derivative of visibility function
 
-    ! Computing g
-    do i=1,n
-      g(i) = -get_dtau(x_rec(i))*exp(-tau(i)) ! CHECK THIS
-      write(*,*) get_dtau(x_rec(i)), tau(i)
-    end do
-    !  Compute splined visibility function
-    call spline(x_rec,g,yp1,ypn,g2)
-    !  Compute splined second derivative of visibility function
-    call spline(x_rec,g2,yp1,ypn,g22)
-
-    ! Write to file - Visibility function
-    open(4, file="g.dat", action="write",status="replace")
-    do i=1, n
-       write(4,*) g(i), g2(i), g22(i)
-    end do
-    close(4)
 
   end subroutine initialize_rec_mod
 
-  ! ---------------------- Saha equation for integration ----------------------
+  ! Saha equation for integration
   subroutine dX_edx(x, X_e, dydx)
         use healpix_types
         implicit none
@@ -183,7 +157,6 @@ contains
 
     end subroutine dX_edx
 
-    !---------------------- Optical thickness for ODE ----------------------
     subroutine dtaudx(x,tau, dydx)
         use healpix_types
         implicit none
@@ -197,7 +170,6 @@ contains
         dydx = -n_e*sigma_T/H*c
     end subroutine dtaudx
 
-  !---------------------- Functions for generalization ----------------------
 
   ! Complete routine for computing n_e at arbitrary x, using precomputed information
   function get_n_e(x_in)
@@ -209,80 +181,59 @@ contains
       !get_n_e = exp(get_n_e)
   end function get_n_e
 
-  !  Complete routine for computing tau at arbitrary x, using precomputed information
+  ! Task: Complete routine for computing tau at arbitrary x, using precomputed information
   function get_tau(x)
     implicit none
 
     real(dp), intent(in) :: x
     real(dp)             :: get_tau
 
-    get_tau = splint(x_rec,tau,tau2,x) ! Only tau?
   end function get_tau
 
-  !  Complete routine for computing the derivative of tau at arbitrary x,
-  ! using precomputed information
-  !function get_dtau(x)
-  !  implicit none
-
-  !  real(dp), intent(in) :: x
-  !  real(dp)             :: get_dtau
-
-  !  !n_e  = get_n_e(x)
-  !  !H    = get_H(x)
-  !  !dydx = -n_e*sigma_T/H*c
-  !  get_dtau =  splint_deriv(x_rec, tau, tau2, x) !LOOK
-  !end function get_dtau
-
-  !TEST##################
+  ! Task: Complete routine for computing the derivative of tau at arbitrary x, using precomputed information
   function get_dtau(x)
-       implicit none
-       real(dp), intent(in) :: x
-       real(dp)             :: get_dtau
-       real(dp)             :: n_e,H_p
-       H_p = get_H_p(x)
-       n_e = get_n_e(x)
-       get_dtau = -n_e*sigma_T*exp(x)*c/H_p!splint_deriv(x_rec,tau_rec,ddtau_rec,x_in)
-   end function get_dtau
-   !TEST##################
-  ! : Complete routine for computing the second derivative of tau at arbitrary x,
+    implicit none
+
+    real(dp), intent(in) :: x
+    real(dp)             :: get_dtau
+
+  end function get_dtau
+
+  ! Task: Complete routine for computing the second derivative of tau at arbitrary x,
   ! using precomputed information
   function get_ddtau(x)
     implicit none
 
     real(dp), intent(in) :: x
     real(dp)             :: get_ddtau
-    get_ddtau = splint(x_rec,tau2, tau22, x)
+
   end function get_ddtau
 
-  !  Complete routine for computing the visibility function, g, at arbitray x
+  ! Task: Complete routine for computing the visibility function, g, at arbitray x
   function get_g(x)
     implicit none
 
     real(dp), intent(in) :: x
     real(dp)             :: get_g
-    real(dp)             :: tau
-    real(dp)             :: dtau
-    tau = get_tau(x)
-    dtau = get_dtau(x)
-    get_g = -dtau*exp(-tau) !Why not use splint here?
+
   end function get_g
 
-  !  Complete routine for computing the derivative of the visibility function, g, at arbitray x
+  ! Task: Complete routine for computing the derivative of the visibility function, g, at arbitray x
   function get_dg(x)
     implicit none
 
     real(dp), intent(in) :: x
     real(dp)             :: get_dg
-    get_dg = splint_deriv(x_rec,g,g2,x)
+
   end function get_dg
 
-  !  Complete routine for computing the second derivative of the visibility function, g, at arbitray x
+  ! Task: Complete routine for computing the second derivative of the visibility function, g, at arbitray x
   function get_ddg(x)
     implicit none
 
     real(dp), intent(in) :: x
     real(dp)             :: get_ddg
-    get_ddg = splint(x_rec,g,g22,x) !Why not spline here?
+
   end function get_ddg
 
 
