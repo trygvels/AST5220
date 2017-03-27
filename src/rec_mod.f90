@@ -6,11 +6,12 @@ module rec_mod
   use spline_1D_mod
   implicit none
 
-  integer(i4b),                        private :: n                 ! Number of grid points
-  real(dp), allocatable, dimension(:), private :: x_rec             ! Grid
-  real(dp), allocatable, dimension(:), private :: tau, tau2, tau22  ! Splined tau and second derivatives
-  real(dp), allocatable, dimension(:), private :: n_e, n_e2, logn_e, logn_e2        ! Splined (log of) electron density, n_e
-  real(dp), allocatable, dimension(:), private :: g, g2, g22        ! Splined visibility function
+  integer(i4b)                        :: n                 ! Number of grid points
+  real(dp), allocatable, dimension(:) :: x_rec             ! Grid
+  real(dp), allocatable, dimension(:) :: X_e ! Fractional electron density, n_e / n_H
+  real(dp), allocatable, dimension(:) :: tau, tau2, tau22  ! Splined tau and second derivatives
+  real(dp), allocatable, dimension(:) :: n_e, n_e2, logn_e, logn_e2        ! Splined (log of) electron density, n_e
+  real(dp), allocatable, dimension(:) :: g, g2, g22        ! Splined visibility function
 contains
 
   subroutine initialize_rec_mod
@@ -19,11 +20,10 @@ contains
     integer(i4b) :: i, j, k
     real(dp)     :: saha_limit, y, T_b, n_b, dydx, xmin, xmax, dx
     real(dp)     :: f, n_e0, X_e0, xstart, xstop, yp1, ypn, eps, hmin, step
-    real(dp)     :: X_econst, C_r
+    real(dp)     :: C_r
 
     logical(lgt) :: use_saha
-    real(dp), allocatable, dimension(:) :: X_e ! Fractional electron density, n_e / n_H
-    real(dp), allocatable, dimension(:) :: dtau ! Fractional electron density, n_e / n_H
+    real(dp), allocatable, dimension(:) :: dtau ! First derivative of tau
 
     saha_limit = 0.99d0       ! Switch from Saha to Peebles when X_e < 0.99
     xstart     = log(1.d-10)  ! Start grids at a = 10^-10
@@ -57,7 +57,7 @@ contains
 
     !---------------------- Time-grid ----------------------
 
-    ! Uniform x-grid with 1000 points
+    ! Uniform x-grid with 1000 points from a = 10^-10 to 1
     dx = (xstop-xstart)/(n-1)
     x_rec(1) = xstart
     do i=2,n
@@ -72,12 +72,11 @@ contains
     use_saha = .true.
     do i = 1, n
        n_b = Omega_b*rho_c/(m_H*exp(x_rec(i))**3)
-
        if (use_saha) then
          ! Use the Saha equation
           T_b = T_0/exp(x_rec(i))
-          X_econst = ((m_e*k_b*T_b)/(2.d0*pi*hbar**2))**1.5d0*exp(-epsilon_0/(k_b*T_b))/n_b
-          X_e(i) = (-X_econst + sqrt(X_econst**2 +4.d0*X_econst))/2.d0
+          X_e0= ((m_e*k_b*T_b)/(2.d0*pi*hbar**2))**1.5d0*exp(-epsilon_0/(k_b*T_b))/n_b
+          X_e(i) = (-X_e0 + sqrt(X_e0**2 +4.d0*X_e0))/2.d0
       if (X_e(i) < saha_limit) use_saha = .false.
       else
           ! Use the Peebles equation
@@ -87,12 +86,6 @@ contains
        n_e(i) = X_e(i)*n_b ! Electron density
     end do
 
-    ! Write to file - x_rec, X_e
-    open(1, file="Xe.dat", action="write",status="replace")
-    do i=1, n
-       write(1,*) x_rec(i), X_e(i)
-    end do
-    close(1)
 
     !---------------------- Electron density ----------------------
 
@@ -101,12 +94,6 @@ contains
     call spline(logn_e, eta,yp1,ypn,logn_e2)
     !call spline(n_e, eta,yp1,ypn,n_e2) !n_e2 is now log
 
-    ! Write to file - electron density
-    open(2, file="neLog.dat", action="write",status="replace")
-    do i=1, n
-       write(2,*) n_e(i), n_e2(i)
-    end do
-    close(2)
 
     ! ---------------------- Optical depth ----------------------
 
@@ -121,18 +108,12 @@ contains
     ! Compute splined second derivative of (log of) optical depth
     call spline(x_rec,tau2,yp1,ypn,tau22) ! Second derivative of second derivative
 
-    ! Write to file - taus
-    open(3, file="tau.dat", action="write",status="replace")
-    do i=1, n
-       write(3,*) tau(i),tau2(i),tau22(i)
-    end do
-    close(3)
 
     !---------------------- Visibility function ----------------------
 
     ! Computing g
     do i=1,n
-      g(i) = -get_dtau(x_rec(i))*exp(-tau(i)) ! CHECK THIS
+      g(i) = -get_dtau(x_rec(i))*exp(-tau(i))
       write(*,*) get_dtau(x_rec(i)), tau(i)
     end do
     !  Compute splined visibility function
@@ -140,12 +121,7 @@ contains
     !  Compute splined second derivative of visibility function
     call spline(x_rec,g2,yp1,ypn,g22)
 
-    ! Write to file - Visibility function
-    open(4, file="g.dat", action="write",status="replace")
-    do i=1, n
-       write(4,*) g(i), g2(i), g22(i)
-    end do
-    close(4)
+
 
   end subroutine initialize_rec_mod
 
@@ -198,6 +174,7 @@ contains
     end subroutine dtaudx
 
   !---------------------- Functions for generalization ----------------------
+  ! TODO: Check all general functions
 
   ! Complete routine for computing n_e at arbitrary x, using precomputed information
   function get_n_e(x_in)
