@@ -91,12 +91,9 @@ contains
 
 
     !---------------------- Electron density ----------------------
-
     !  Compute splined (log of) electron density function
     logn_e = log(n_e)
     call spline(logn_e, eta,yp1,ypn,logn_e2)
-    !call spline(n_e, eta,yp1,ypn,n_e2) !n_e2 is now log
-
 
     ! ---------------------- Optical depth ----------------------
     !  Compute optical depth at all grid points (Reverse integration)
@@ -110,7 +107,7 @@ contains
     call spline(x_rec, tau, yp1, ypn,tau2)
 
     ! Compute splined second derivative of (log of) optical depth
-    call spline(x_rec,tau2,yp1,ypn,tau22) ! Second derivative of second derivative
+    call spline(x_rec,tau2,yp1,ypn,tau22)
 
     ! Saving values of dtau
     do i = 1,n
@@ -118,7 +115,7 @@ contains
     end do
 
     !---------------------- Visibility function ----------------------
-    ! Computing g
+    ! Computing visibility function gg
     do i=1,n
       g(i) = -get_dtau(x_rec(i))*exp(-tau(i))
     end do
@@ -139,7 +136,7 @@ contains
       if ((n_e(i) - get_n_e(x_rec(i))) /= 0.d0) write(*,*) "n_e not zero at i = ", i
       if ((tau(i) - get_tau(x_rec(i))) /= 0.d0) write(*,*) "tau not zero at i = ", i
       if ((tau2(i) - get_ddtau(x_rec(i))) /= 0.d0) write(*,*) "tau2 not zero at i = ", i
-      if ((g(i)-get_g(x_rec(i))) /= 0.d0) write(*,*) "g not zero at i = ", i
+      if ((g(i) - get_g(x_rec(i))) /= 0.d0) write(*,*) "g not zero at i = ", i
       if ((g2(i) - get_ddg(x_rec(i))) /= 0.d0) write(*,*) "g2 not zero at i = ", i
     end do
 
@@ -152,15 +149,13 @@ contains
         real(dp),               intent(in)  :: x
         real(dp), dimension(:), intent(in)  :: X_e
         real(dp), dimension(:), intent(out) :: dydx
-        real(dp) :: T_b,n_b,phi2,alpha2,beta,beta2,n1s,lambda_alpha,C_r, Xe, a, H
-        Xe = X_e(1)
-        a  = exp(x)
-        H  = get_H(x)
-        T_b          = T_0/a
-        n_b          = Omega_b*rho_c/(m_H*a**3)
-        phi2         = 0.448d0*log(epsilon_0/(k_b*T_b))
-        alpha2       = 64.d0*pi/sqrt(27.d0*pi)*(alpha/m_e)**2*sqrt(epsilon_0/(k_b*T_b))*phi2*hbar**2/c
-        beta         = alpha2 *((m_e*k_b*T_b)/(2.d0*pi*hbar**2))**1.5*exp(-epsilon_0/(k_b*T_b))
+        real(dp) :: T_b,n_b,phi2,alpha2,beta,beta2,n1s,lambda_alpha,C_r,H
+        H      = get_H(x)
+        T_b    = T_0/exp(x)
+        n_b    = Omega_b*rho_c/(m_H*exp(x)**3)
+        phi2   = 0.448d0*log(epsilon_0/(k_b*T_b))
+        alpha2 = 64.d0*pi/sqrt(27.d0*pi)*(alpha/m_e)**2*sqrt(epsilon_0/(k_b*T_b))*phi2*hbar**2/c
+        beta   = alpha2 *((m_e*k_b*T_b)/(2.d0*pi*hbar**2))**1.5*exp(-epsilon_0/(k_b*T_b))
 
         ! To avoid beta2 going to infinity, set it to 0
         if(T_b <= 169.d0) then
@@ -169,10 +164,10 @@ contains
             beta2    = beta*exp((3.d0*epsilon_0)/(4.d0*k_b*T_b))
         end if
 
-        n1s          = (1.d0-Xe)*n_b
+        n1s          = (1.d0-X_e(1))*n_b
         lambda_alpha = H*(3.d0*epsilon_0)**3/((8.d0*pi)**2*n1s) /(c*hbar)**3
         C_r          = (lambda_2s1s +lambda_alpha)/(lambda_2s1s+lambda_alpha+beta2)
-        dydx         = C_r/H*(beta*(1.d0-Xe)- n_b*alpha2*Xe**2)
+        dydx         = C_r/H*(beta*(1.d0-X_e(1)) - n_b*alpha2*X_e(1)**2)
 
     end subroutine dX_edx
 
