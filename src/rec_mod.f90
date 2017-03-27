@@ -99,7 +99,7 @@ contains
 
 
     ! ---------------------- Optical depth ----------------------
-    !  Compute optical depth at all grid points
+    !  Compute optical depth at all grid points (Reverse integration)
     tau(n) = 0.d0
     do i=n-1,1,-1
       tau(i) = tau(i+1)
