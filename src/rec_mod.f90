@@ -99,15 +99,16 @@ contains
 
 
     ! ---------------------- Optical depth ----------------------
-
     !  Compute optical depth at all grid points
     tau(n) = 0.d0
     do i=n-1,1,-1
       tau(i) = tau(i+1)
       call odeint(tau(i:i),x_rec(i+1),x_rec(i),eps,step,hmin,dtaudx,bsstep,output)
     end do
+
     ! Compute splined (log of) optical depth
     call spline(x_rec, tau, yp1, ypn,tau2)
+
     ! Compute splined second derivative of (log of) optical depth
     call spline(x_rec,tau2,yp1,ypn,tau22) ! Second derivative of second derivative
 
@@ -117,19 +118,29 @@ contains
     end do
 
     !---------------------- Visibility function ----------------------
-
     ! Computing g
     do i=1,n
       g(i) = -get_dtau(x_rec(i))*exp(-tau(i))
     end do
+
     !  Compute splined visibility function
     call spline(x_rec,g,yp1,ypn,g2)
+
     !  Compute splined second derivative of visibility function
     call spline(x_rec,g2,yp1,ypn,g22)
 
     ! Saving values of dg
     do i = 1,n
       dg(i) = get_dg(x_rec(i))
+    end do
+
+    ! ---------------------- Generalization test  ----------------------
+    do i = 1,n
+      if ((n_e(i) - get_n_e(x_rec(i))) /= 0.d0) write(*,*) "n_e not zero at i = ", i
+      if ((tau(i) - get_tau(x_rec(i))) /= 0.d0) write(*,*) "tau not zero at i = ", i
+      if ((tau2(i) - get_ddtau(x_rec(i))) /= 0.d0) write(*,*) "tau2 not zero at i = ", i
+      if ((g(i)-get_g(x_rec(i))) /= 0.d0) write(*,*) "g not zero at i = ", i
+      if ((g2(i) - get_ddg(x_rec(i))) /= 0.d0) write(*,*) "g2 not zero at i = ", i
     end do
 
   end subroutine initialize_rec_mod
@@ -151,10 +162,7 @@ contains
         alpha2       = 64.d0*pi/sqrt(27.d0*pi)*(alpha/m_e)**2*sqrt(epsilon_0/(k_b*T_b))*phi2*hbar**2/c
         beta         = alpha2 *((m_e*k_b*T_b)/(2.d0*pi*hbar**2))**1.5*exp(-epsilon_0/(k_b*T_b))
 
-        !This part is needed since the exponent
-        !in beta2 becomes so large that the computer
-        !sets it to infinity. However beta goes to zero before that
-        !so it should be 0 even if the exponent is enormous.
+        ! To avoid beta2 going to infinity, set it to 0
         if(T_b <= 169.d0) then
             beta2    = 0.d0
         else
@@ -183,8 +191,6 @@ contains
     end subroutine dtaudx
 
   !---------------------- Functions for generalization ----------------------
-  ! TODO: Check all general functions
-
   ! Complete routine for computing n_e at arbitrary x, using precomputed information
   function get_n_e(x_in)
       implicit none
@@ -202,7 +208,7 @@ contains
     real(dp), intent(in) :: x
     real(dp)             :: get_tau
 
-    get_tau = splint(x_rec,tau,tau2,x) ! Only tau?
+    get_tau = splint(x_rec,tau,tau2,x)
   end function get_tau
 
   function get_dtau(x)
@@ -236,7 +242,7 @@ contains
     real(dp)             :: dtau
     tau = get_tau(x)
     dtau = get_dtau(x)
-    get_g = -dtau*exp(-tau) !Why not use splint here?
+    get_g = -dtau*exp(-tau)
   end function get_g
 
   !  Complete routine for computing the derivative of the visibility function, g, at arbitray x
@@ -254,7 +260,7 @@ contains
 
     real(dp), intent(in) :: x
     real(dp)             :: get_ddg
-    get_ddg = splint(x_rec,g,g22,x) !Why not spline here?
+    get_ddg = splint(x_rec,g2,g22,x)
   end function get_ddg
 
 
