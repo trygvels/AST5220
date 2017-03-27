@@ -43,7 +43,7 @@ plt.semilogy(z, Xe,label=r"$X_e$", color=tableau20[2])
 plt.legend(loc=6)
 plt.show()
 fig.savefig('Xe.pdf', bbox_inches='tight',pad_inches=0.106)
-"""
+
 
 tau, tau2, tau22 = np.loadtxt("tau.dat", unpack=True)
 
@@ -55,12 +55,12 @@ plt.xlim(1800,0)
 plt.ylim(1e-8,1e2)
 z = 1/np.exp(x)-1
 plt.semilogy(z, tau,label=r"$\tau$", color=tableau20[2])
-plt.semilogy(z, tau2,label=r"$\tau$", color=tableau20[4])
-plt.semilogy(z, tau22,label=r"$\tau$", color=tableau20[6])
+#plt.semilogy(z, tau2,label=r"$\tau$", color=tableau20[4])
+#plt.semilogy(z, tau22,label=r"$\tau$", color=tableau20[6])
 #plt.legend(loc=6)
 plt.show()
-#fig.savefig('tau.pdf', bbox_inches='tight',pad_inches=0.106)
-
+fig.savefig('tau.pdf', bbox_inches='tight',pad_inches=0.106)
+"""
 
 g,g2,g22 = np.loadtxt("g.dat", unpack=True)
 # Plotting g
@@ -70,8 +70,8 @@ plt.xlabel(r"z")
 plt.xlim(1800,0)
 z = 1/np.exp(x)-1
 plt.plot(z, g,label=r"$\tau$", color=tableau20[2])
-plt.plot(z, g2,label=r"$\tau$", color=tableau20[4])
-plt.plot(z, g22,label=r"$\tau$", color=tableau20[6])
+#plt.plot(z, g2,label=r"$\tau$", color=tableau20[4])
+#plt.plot(z, g22,label=r"$\tau$", color=tableau20[6])
 #plt.legend(loc=6)
 plt.show()
-#fig.savefig('tau.pdf', bbox_inches='tight',pad_inches=0.106)
+fig.savefig('g.pdf', bbox_inches='tight',pad_inches=0.106)
