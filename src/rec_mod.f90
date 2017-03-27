@@ -9,9 +9,12 @@ module rec_mod
   integer(i4b)                        :: n                 ! Number of grid points
   real(dp), allocatable, dimension(:) :: x_rec             ! Grid
   real(dp), allocatable, dimension(:) :: X_e ! Fractional electron density, n_e / n_H
-  real(dp), allocatable, dimension(:) :: tau, tau2, tau22  ! Splined tau and second derivatives
+  real(dp), allocatable, dimension(:) :: tau, tau2, tau22  ! tau, tau'', (tau'')''
+  real(dp), allocatable, dimension(:) :: dtau ! First derivative of tau: tau'
   real(dp), allocatable, dimension(:) :: n_e, n_e2, logn_e, logn_e2        ! Splined (log of) electron density, n_e
-  real(dp), allocatable, dimension(:) :: g, g2, g22        ! Splined visibility function
+  real(dp), allocatable, dimension(:) :: g, g2, g22        ! Visibility: g, g'',(g'')''
+  real(dp), allocatable, dimension(:) :: dg ! First derivative of g: g'
+
 contains
 
   subroutine initialize_rec_mod
@@ -23,7 +26,6 @@ contains
     real(dp)     :: C_r
 
     logical(lgt) :: use_saha
-    real(dp), allocatable, dimension(:) :: dtau ! First derivative of tau
 
     saha_limit = 0.99d0       ! Switch from Saha to Peebles when X_e < 0.99
     xstart     = log(1.d-10)  ! Start grids at a = 10^-10
@@ -49,6 +51,7 @@ contains
     allocate(n_e(n))
     allocate(n_e2(n))
     allocate(g(n))
+    allocate(dg(n))
     allocate(g2(n))
     allocate(g22(n))
 
@@ -108,20 +111,26 @@ contains
     ! Compute splined second derivative of (log of) optical depth
     call spline(x_rec,tau2,yp1,ypn,tau22) ! Second derivative of second derivative
 
+    ! Saving values of dtau
+    do i = 1,n
+      dtau(i) = get_dtau(x_rec(i))
+    end do
 
     !---------------------- Visibility function ----------------------
 
     ! Computing g
     do i=1,n
       g(i) = -get_dtau(x_rec(i))*exp(-tau(i))
-      write(*,*) get_dtau(x_rec(i)), tau(i)
     end do
     !  Compute splined visibility function
     call spline(x_rec,g,yp1,ypn,g2)
     !  Compute splined second derivative of visibility function
     call spline(x_rec,g2,yp1,ypn,g22)
 
-
+    ! Saving values of dg
+    do i = 1,n
+      dg(i) = get_dg(x_rec(i))
+    end do
 
   end subroutine initialize_rec_mod
 
