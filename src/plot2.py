@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import rc
 
 #-------------------- Colors --------------------
 # These are the "Tableau 20" colors as RGB.
@@ -34,44 +35,77 @@ plt.grid(b=True, which='minor', alpha=0.2)
 x, Xe = np.loadtxt("Xe.dat", unpack=True)
 
 # Plotting X_e
-plt.title(r"$X_e$")
+plt.title(r"Electron fraction $X_e$")
 plt.ylabel(r"$X_e$")
 plt.xlabel(r"z")
 plt.xlim(1800,0)
 z = 1/np.exp(x)-1
 plt.semilogy(z, Xe,label=r"$X_e$", color=tableau20[2])
-plt.legend(loc=6)
+plt.legend(fancybox=True,framealpha=0.5)
 plt.show()
 #fig.savefig('Xe.pdf', bbox_inches='tight',pad_inches=0.106)
 
+#--------------------Configuration--------------------
 
-tau, tau2, tau22 = np.loadtxt("tau.dat", unpack=True)
+fig = plt.figure()
+# Remove the plot frame lines. They are unnecessary chartjunk.
+ax = plt.subplot(111)
+ax.yaxis.grid()
+#ax.xaxis.grid()
+ax.spines["top"].set_visible(False)
+ax.spines["bottom"].set_visible(False)
+ax.spines["right"].set_visible(False)
+ax.spines["left"].set_visible(False)
+plt.xticks(fontsize=10)
+plt.yticks(fontsize=10)
+# Remove the tick marks; they are unnecessary with the tick lines we just plotted.
+plt.tick_params(axis="both", which="both", bottom="off", top="off",
+                labelbottom="on", left="off", right="off", labelleft="on")
 
+plt.grid(b=True, which='minor', alpha=0.2)
+
+
+tau, dtau,tau2 = np.loadtxt("tau.dat", unpack=True)
 # Plotting Tau
-plt.title(r"$\tau$")
-plt.ylabel(r"$\tau$")
+plt.title(r"Optical depth $\tau$ and absolute value of derivatives")
+plt.ylabel(r"$\tau$, $|\tau'|$, $|\tau''|$")
 plt.xlabel(r"z")
-plt.xlim(1800,0)
-plt.ylim(1e-8,1e2)
-z = 1/np.exp(x)-1
-plt.semilogy(z, tau,label=r"$\tau$", color=tableau20[2])
-#plt.semilogy(z, tau2,label=r"$\tau$", color=tableau20[4])
-#plt.semilogy(z, tau22,label=r"$\tau$", color=tableau20[6])
-#plt.legend(loc=6)
+plt.ylim(1e-8,1e4)
+plt.xlim(-10,0)
+plt.semilogy(x, abs(tau),  label=r"$\tau$",color=tableau20[8])
+plt.semilogy(x, abs(dtau), label=r"$|\tau'|$",color=tableau20[2])
+plt.semilogy(x, abs(tau2), label=r"$|\tau''|$",color=tableau20[4])
+plt.legend(fancybox=True,framealpha=0.5)
 plt.show()
 #fig.savefig('tau.pdf', bbox_inches='tight',pad_inches=0.106)
 
+#--------------------Configuration--------------------
+fig = plt.figure()
+# Remove the plot frame lines. They are unnecessary chartjunk.
+ax = plt.subplot(111)
+ax.yaxis.grid()
+#ax.xaxis.grid()
+ax.spines["top"].set_visible(False)
+ax.spines["bottom"].set_visible(False)
+ax.spines["right"].set_visible(False)
+ax.spines["left"].set_visible(False)
+plt.xticks(fontsize=10)
+plt.yticks(fontsize=10)
+# Remove the tick marks; they are unnecessary with the tick lines we just plotted.
+plt.tick_params(axis="both", which="both", bottom="off", top="off",
+                labelbottom="on", left="off", right="off", labelleft="on")
 
-g,g2,g22 = np.loadtxt("g.dat", unpack=True)
+plt.grid(b=True, which='minor', alpha=0.2)
+
+g,dg,g2 = np.loadtxt("g.dat", unpack=True)
 # Plotting g
-plt.title(r"$g$")
-plt.ylabel(r"$g$")
+plt.title(r"Visibility function $\tilde{g}$ and scaled derivatives")
+plt.ylabel(r"$\tilde{g}$, $\tilde{g}'/10$, $\tilde{g}''/300$")
 plt.xlabel(r"z")
-plt.xlim(1800,0)
-z = 1/np.exp(x)-1
-plt.plot(z, g,label=r"$\tau$", color=tableau20[2])
-#plt.plot(z, g2,label=r"$\tau$", color=tableau20[4])
-#plt.plot(z, g22,label=r"$\tau$", color=tableau20[6])
-#plt.legend(loc=6)
+plt.xlim(-7.4,-6.4)
+plt.plot(x, g,label=r"$\tilde{g}$", color=tableau20[8])
+plt.plot(x, dg/10.,label=r"$\tilde{g}'$",color=tableau20[4])
+plt.plot(x, g2/300., label=r"$\tilde{g}''$", color=tableau20[2])
+plt.legend(fancybox=True,framealpha=0.5)
 plt.show()
 #fig.savefig('g.pdf', bbox_inches='tight',pad_inches=0.106)
