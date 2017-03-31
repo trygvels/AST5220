@@ -92,10 +92,7 @@ contains
 
     !---------------------- Electron density ----------------------
     !  Compute splined (log of) electron density function
-
     call spline(x_rec,log(n_e),yp1,ypn,n_e2)
-    !n_e = exp(n_e)
-    !n_e2 = exp(n_e2)
     ! ---------------------- Optical depth ----------------------
     !  Compute optical depth at all grid points (Reverse integration)
     tau(n) = 0.d0
@@ -193,8 +190,7 @@ contains
       real(dp), intent(in) :: x_in
       real(dp)             :: get_n_e
       !Spline integration with precalculated logarithmic values
-      get_n_e = splint(x_rec, (n_e), (n_e2), x_in)
-      !get_n_e = exp(get_n_e)
+      get_n_e = splint(x_rec, n_e, n_e2, x_in)
   end function get_n_e
 
   !  Complete routine for computing tau at arbitrary x, using precomputed information
