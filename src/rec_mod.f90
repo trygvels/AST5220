@@ -92,8 +92,8 @@ contains
 
     !---------------------- Electron density ----------------------
     !  Compute splined (log of) electron density function
-    logn_e = log(n_e)
-    call spline(logn_e, eta,yp1,ypn,logn_e2)
+    n_e = log(n_e)
+    call spline(n_e, eta,yp1,ypn,n_e2)
 
     ! ---------------------- Optical depth ----------------------
     !  Compute optical depth at all grid points (Reverse integration)
@@ -211,10 +211,10 @@ contains
        real(dp), intent(in) :: x
        real(dp)             :: get_dtau
        real(dp)             :: n_e,H_p
-       H_p = get_H_p(x)
-       n_e = get_n_e(x)
-       get_dtau = -n_e*sigma_T*exp(x)*c/H_p
-       !  get_dtau =  splint_deriv(x_rec, tau, tau2, x) !LOOK
+       !H_p = get_H_p(x)
+       !n_e = get_n_e(x)
+       !get_dtau = -n_e*sigma_T*exp(x)*c/H_p
+       get_dtau =  splint_deriv(x_rec, tau, tau2, x) !LOOK
    end function get_dtau
 
   ! : Complete routine for computing the second derivative of tau at arbitrary x,
