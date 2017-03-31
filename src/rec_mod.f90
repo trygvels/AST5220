@@ -89,7 +89,8 @@ contains
 
     !---------------------- Electron density ----------------------
     !  Compute splined (log of) electron density function
-    call spline(x_rec,log(n_e),yp1,ypn,n_e2)
+    n_e = log(n_e)
+    call spline(x_rec,n_e,yp1,ypn,n_e2)
     ! ---------------------- Optical depth ----------------------
     !  Compute optical depth at all grid points (Reverse integration)
     tau(n) = 0.d0
@@ -128,7 +129,7 @@ contains
 
     ! ---------------------- Generalization test  ----------------------
     do i = 1,n
-      if ((n_e(i) - get_n_e(x_rec(i))) /= 0.d0) write(*,*) "n_e not zero at i = ", i
+      if ((exp(n_e(i)) - get_n_e(x_rec(i))) /= 0.d0) write(*,*) "n_e not zero at i = ", i
       if ((tau(i) - get_tau(x_rec(i))) /= 0.d0) write(*,*) "tau not zero at i = ", i
       if ((tau2(i) - get_ddtau(x_rec(i))) /= 0.d0) write(*,*) "tau2 not zero at i = ", i
       if ((g(i) - get_g(x_rec(i))) /= 0.d0) write(*,*) "g not zero at i = ", i
@@ -187,7 +188,8 @@ contains
       real(dp), intent(in) :: x_in
       real(dp)             :: get_n_e
       !Spline integration with precalculated logarithmic values
-      get_n_e = splint(x_rec, n_e, n_e2, x_in)
+
+      get_n_e = exp(splint(x_rec, n_e, n_e2, x_in))
   end function get_n_e
 
   !  Complete routine for computing tau at arbitrary x, using precomputed information
