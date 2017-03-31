@@ -92,9 +92,10 @@ contains
 
     !---------------------- Electron density ----------------------
     !  Compute splined (log of) electron density function
-    n_e = log(n_e)
-    call spline(n_e, eta,yp1,ypn,n_e2)
 
+    call spline(log(n_e), eta,yp1,ypn,n_e2)
+    !n_e = exp(n_e)
+    !n_e2 = exp(n_e2)
     ! ---------------------- Optical depth ----------------------
     !  Compute optical depth at all grid points (Reverse integration)
     tau(n) = 0.d0
