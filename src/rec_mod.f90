@@ -8,12 +8,12 @@ module rec_mod
 
   integer(i4b)                        :: n                 ! Number of grid points
   real(dp), allocatable, dimension(:) :: x_rec             ! Grid
-  real(dp), allocatable, dimension(:) :: X_e ! Fractional electron density, n_e / n_H
+  real(dp), allocatable, dimension(:) :: X_e               ! Fractional electron density, n_e / n_H
   real(dp), allocatable, dimension(:) :: tau, tau2, tau22  ! tau, tau'', (tau'')''
-  real(dp), allocatable, dimension(:) :: dtau ! First derivative of tau: tau'
-  real(dp), allocatable, dimension(:) :: n_e, n_e2, logn_e, logn_e2        ! Splined (log of) electron density, n_e
+  real(dp), allocatable, dimension(:) :: dtau              ! First derivative of tau: tau'
+  real(dp), allocatable, dimension(:) :: n_e, n_e2         ! Splined (log of) electron density, n_e
   real(dp), allocatable, dimension(:) :: g, g2, g22        ! Visibility: g, g'',(g'')''
-  real(dp), allocatable, dimension(:) :: dg ! First derivative of g: g'
+  real(dp), allocatable, dimension(:) :: dg                ! First derivative of g: g'
 
 contains
 
@@ -54,9 +54,6 @@ contains
     allocate(dg(n))
     allocate(g2(n))
     allocate(g22(n))
-
-    allocate(logn_e(n))
-    allocate(logn_e2(n))
 
     !---------------------- Time-grid ----------------------
 
