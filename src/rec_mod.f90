@@ -93,7 +93,7 @@ contains
     !---------------------- Electron density ----------------------
     !  Compute splined (log of) electron density function
 
-    call spline(log(n_e), eta,yp1,ypn,n_e2)
+    call spline(x_rec,log(n_e),yp1,ypn,n_e2)
     !n_e = exp(n_e)
     !n_e2 = exp(n_e2)
     ! ---------------------- Optical depth ----------------------
@@ -193,7 +193,7 @@ contains
       real(dp), intent(in) :: x_in
       real(dp)             :: get_n_e
       !Spline integration with precalculated logarithmic values
-      get_n_e = splint(x_rec, n_e, n_e2, x_in)
+      get_n_e = splint(x_rec, (n_e), (n_e2), x_in)
       !get_n_e = exp(get_n_e)
   end function get_n_e
 
@@ -215,7 +215,7 @@ contains
        !H_p = get_H_p(x)
        !n_e = get_n_e(x)
        !get_dtau = -n_e*sigma_T*exp(x)*c/H_p
-       get_dtau =  splint_deriv(x_rec, tau, tau2, x) !LOOK
+       get_dtau =  splint_deriv(x_rec, tau, tau2, x)
    end function get_dtau
 
   ! : Complete routine for computing the second derivative of tau at arbitrary x,
