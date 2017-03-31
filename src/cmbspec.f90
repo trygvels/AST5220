@@ -22,7 +22,7 @@ program cmbspec
      write(1,*) x_rec(i), X_e(i)
      write(2,*) n_e(i), n_e2(i)
      write(3,*) tau(i),dtau(i), tau2(i)
-     write(4,*) g(i),dg(i), g2(i), g22(i)
+     write(4,*) g(i),dg(i), g2(i)
   end do
 
   close(1)
