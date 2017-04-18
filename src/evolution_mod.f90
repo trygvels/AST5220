@@ -47,9 +47,9 @@ contains
     real(dp)     :: g, dg, ddg, tau, dt, ddt, H_p, dH_p, ddHH_p, Pi, dPi, ddPi
     real(dp), allocatable, dimension(:,:) :: S_lores
 
-    ! Task: Output a pre-computed 2D array (over k and x) for the 
-    !       source function, S(k,x). Remember to set up (and allocate) output 
-    !       k and x arrays too. 
+    ! TODO: Output a pre-computed 2D array (over k and x) for the
+    !       source function, S(k,x). Remember to set up (and allocate) output
+    !       k and x arrays too.
     !
     ! Substeps:
     !   1) First compute the source function over the existing k and x
@@ -70,7 +70,12 @@ contains
 
     integer(i4b) :: l, i
 
-    ! Task: Initialize k-grid, ks; quadratic between k_min and k_max
+    ! TODO: Initialize k-grid, ks; quadratic between k_min and k_max
+    allocate(ks(n_k))
+    ks(1) = k_min
+    do i=2,n_k
+      ks(i) = ks(i-1) + (k_max-k_min)*((k-1)/(n_k-1))**2
+    end do
 
     ! Allocate arrays for perturbation quantities
     allocate(Theta(0:n_t, 0:lmax_int, n_k))
@@ -85,19 +90,19 @@ contains
     allocate(dv_b(0:n_t, n_k))
     allocate(dTheta(0:n_t, 0:lmax_int, n_k))
 
-    ! Task: Set up initial conditions for the Boltzmann and Einstein equations
-    Phi(0,:)     = 
-    delta(0,:)   = 
-    delta_b(0,:) = 
-       
+    ! TODO: Set up initial conditions for the Boltzmann and Einstein equations
+    Phi(0,:)     = 1d0
+    delta(0,:)   = 1.5d0*Phi(0,:)
+    delta_b(0,:) = delta(0,:) !REMEMBER x(i) DOESNT MAKE SENSE. CONVERT k TO x?
+
     do i = 1, n_k
-       v(0,i)       = 
-       v_b(0,i)     = 
-       Theta(0,0,i) = 
-       Theta(0,1,i) = 
-       Theta(0,2,i) = 
+       v(0,i)       = c*k/(2*get_H_p(x_t(i)))*Phi(0,:) !TODO: Change x
+       v_b(0,i)     = v(0,i)
+       Theta(0,0,i) = 0.5d0*Phi(0,:)
+       Theta(0,1,i) = -ck/(6*get_H_p(x_t(i)))*Phi(0,:) !TODO: Change x
+       Theta(0,2,i) = -20*c*k/(45*get_H_p(x_t(i))*get_dtau(x_t(i)))*Theta(0,1,i) !TODO: Change x
        do l = 3, lmax_int
-          Theta(0,l,i) = 
+          Theta(0,l,i) = -l*c*k*Theta(0,l-1,i)/((2*l+1)*get_H_p(x_t(i))*get_dtau(x_t(i))) !TODO: change x
        end do
     end do
 
@@ -134,43 +139,44 @@ contains
        y_tight_coupling(5) = Phi(0,k)
        y_tight_coupling(6) = Theta(0,0,k)
        y_tight_coupling(7) = Theta(0,1,k)
-       
-       ! Find the time to which tight coupling is assumed, 
+
+       ! Find the time to which tight coupling is assumed,
        ! and integrate equations to that time
        x_tc = get_tight_coupling_time(k_current)
 
-       ! Task: Integrate from x_init until the end of tight coupling, using
+       ! TODO: Integrate from x_init until the end of tight coupling, using
        !       the tight coupling equations
+       do j=1,n_t
+         call odeint(y_tight_coupling,x_t(j-1),x_t(j), eps,h1,hmin,derivs_tc, bsstep, output)
 
-
-       ! Task: Set up variables for integration from the end of tight coupling 
+       ! TODO: Set up variables for integration from the end of tight coupling
        ! until today
-       y(1:7) = 
-       y(8)   = 
+       y(1:7) =
+       y(8)   =
        do l = 3, lmax_int
-          y(6+l) = 
+          y(6+l) =
        end do
 
-       
+
        do i = 1, n_t
-          ! Task: Integrate equations from tight coupling to today
+          ! TODO: Integrate equations from tight coupling to today
 
-          ! Task: Store variables at time step i in global variables
-          delta(i,k)   = 
-          delta_b(i,k) = 
-          v(i,k)       = 
-          v_b(i,k)     = 
-          Phi(i,k)     = 
+          ! TODO: Store variables at time step i in global variables
+          delta(i,k)   =
+          delta_b(i,k) =
+          v(i,k)       =
+          v_b(i,k)     =
+          Phi(i,k)     =
           do l = 0, lmax_int
-             Theta(i,l,k) = 
+             Theta(i,l,k) =
           end do
-          Psi(i,k)     = 
+          Psi(i,k)     =
 
-          ! Task: Store derivatives that are required for C_l estimation
-          dPhi(i,k)     = 
-          dv_b(i,k)     = 
-          dTheta(i,:,k) = 
-          dPsi(i,k)     = 
+          ! TODO: Store derivatives that are required for C_l estimation
+          dPhi(i,k)     =
+          dv_b(i,k)     =
+          dTheta(i,:,k) =
+          dPsi(i,k)     =
        end do
 
     end do
@@ -182,15 +188,21 @@ contains
   end subroutine integrate_perturbation_eqns
 
 
-  ! Task: Complete the following routine, such that it returns the time at which
+  ! TODO: Complete the following routine, such that it returns the time at which
   !       tight coupling ends. In this project, we define this as either when
   !       dtau < 10 or c*k/(H_p*dt) > 0.1 or x > x(start of recombination)
   function get_tight_coupling_time(k)
     implicit none
-
+    integer(i4b)          :: i,n
     real(dp), intent(in)  :: k
-    real(dp)              :: get_tight_coupling_time
-
+    real(dp)              :: get_tight_coupling_time, x
+    n = 1d4
+    do i =0,n
+      x = x_init - i*x_init/n
+      if (x<x_start_rec .and. c*k*/H_p*dt<10.d0 .and. get_dtau(x)>10) then
+        get_tight_coupling_time = x
+      end if
+    end do
   end function get_tight_coupling_time
 
 end module evolution_mod

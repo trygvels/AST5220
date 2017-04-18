@@ -8,7 +8,7 @@ program cmbspec
 
   ! Initialize time grids
   call initialize_time_mod
-
+  ! Initialize recombination module
   call initialize_rec_mod
 
   ! ------ Output to file desired quantities here ------
@@ -30,7 +30,9 @@ program cmbspec
   close(3)
   close(4)
 
-
+  ! Initialize perturbation module
+  call initialize_perturbation_eqns
+  call integrate_perturbation_eqns
 
 
 end program cmbspec
