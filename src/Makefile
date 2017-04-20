@@ -19,7 +19,7 @@ cmbspec: $(OBJS)
 	$(FC) $(FFLAGS) $(OPTIM) -o $(OUTPUT) $(OBJS) $(LAPACK)
 
 # Dependencies
-cmbspec.o       : time_mod.o rec_mod.o
+cmbspec.o       : time_mod.o rec_mod.o evolution_mod.o
 time_mod.o      : params.o spline_1D_mod.o
 
 # Compilation of source files
