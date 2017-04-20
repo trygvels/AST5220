@@ -68,7 +68,7 @@ contains
   subroutine initialize_perturbation_eqns
     implicit none
 
-    integer(i4b) :: l, i
+    integer(i4b) :: l, i, k
     ! DONE: Initialize k-grid, ks; quadratic between k_min and k_max
     allocate(ks(n_k))
     ks(1) = k_min
@@ -96,12 +96,12 @@ contains
     Theta(0,0,:) = 0.5d0*Phi(0,:) !Sped up when not in loop
 
     do i = 1, n_k
-       v(0,i)       = c*k/(2.d0*get_H_p(x_init))*Phi(0,:)
+       v(0,i)       = c*k/(2.d0*get_H_p(x_t(1)))*Phi(0,:)
        v_b(0,i)     = v(0,i)
-       Theta(0,1,i) = -c*k/(6.d0*get_H_p(x_init))*Phi(0,:)
-       Theta(0,2,i) = -20.d0*c*k/(45.d0*get_H_p(x_init)*get_dtau(x_init))*Theta(0,1,i)
+       Theta(0,1,i) = -c*k/(6.d0*get_H_p(x_t(1)))*Phi(0,:)
+       Theta(0,2,i) = -20.d0*c*k/(45.d0*get_H_p(x_t(1))*get_dtau(x_t(1)))*Theta(0,1,i)
        do l = 3, lmax_int
-          Theta(0,l,i) = -l*c*k*Theta(0,l-1,i)/((2*l+1)*get_H_p(x_init)*get_dtau(x_init))
+          Theta(0,l,i) = -l*c*k*Theta(0,l-1,i)/((2*l+1)*get_H_p(x_t(1))*get_dtau(x_t(1)))
        end do
     end do
 
@@ -110,15 +110,13 @@ contains
   subroutine integrate_perturbation_eqns
     implicit none
 
-    integer(i4b) :: i, j, k, l,
+    integer(i4b) :: i, k, l
     real(dp)     :: x1, x2, x_init
     real(dp)     :: eps, hmin, h1, x_tc, H_p, dt, t1, t2
 
     real(dp), allocatable, dimension(:) :: y, y_tight_coupling, dydx
 
     x_init = log(a_init)
-    n_tc = 200
-    n_ptc = 300
     eps    = 1.d-8
     hmin   = 0.d0
     allocate(y(npar))
@@ -171,19 +169,19 @@ contains
            dv_b(i,k)     = dydx(5)
            dTheta(i,:,k) = dydx(6)
            dPsi(i,k)     = dydx(7)
-           dTheta(i,2,k) = 2.d0/5.d0*c*k_current/get_H_p(x_t(i))*Theta(i,1,k) - 3.d0/5.d0*ck_current/get_H_p(x_t(i))*Theta(i,3,k)+get_dtau(x_t(i))*0.9d0*Theta(i,2,k)
+           dTheta(i,2,k) = 2.d0/5.d0*c*k_current/get_H_p(x_t(i))*Theta(i,1,k) - 3.d0/5.d0*c*k_current/get_H_p(x_t(i))*Theta(i,3,k)+get_dtau(x_t(i))*0.9d0*Theta(i,2,k)
 
            do l=3,lmax_int-1
            dTheta(i,l,k) = l/(2.d0*l+1.d0)*c*k_current/get_H_p(x_t(i))*dTheta(i,l-1,k) - &
                        (l+1.d0)/(2.d0*l+1.d0)*c*k_current/get_H_p(x_t(i))*dTheta(i,l+1,k) +get_dtau(x_t(i))*Theta(i,l,k)
            end do
            ! STORE DERIVATIVES
-           call dytc
+           call dytc(x_t(i),y_tight_coupling,dydx)
            dPhi(i,k)     = dydx(4)
            dv_b(i,k)     = dydx(5)
            dTheta(i,:,k) = dydx(6)
            dPsi(i,k)     = dydx(7)
-           dTheta(i,2,k) = 2.d0/5.d0*c*k_current/get_H_p(x_t(i))*Theta(i,1,k) - 3.d0/5.d0*ck_current/get_H_p(x_t(i))*Theta(i,3,k)+get_dtau(x_t(i))*0.9d0*Theta(i,2,k)
+           dTheta(i,2,k) = 2.d0/5.d0*c*k_current/get_H_p(x_t(i))*Theta(i,1,k) - 3.d0/5.d0*c*k_current/get_H_p(x_t(i))*Theta(i,3,k)+get_dtau(x_t(i))*0.9d0*Theta(i,2,k)
 
            do l=3,lmax_int-1
            dTheta(i,l,k) = l/(2.d0*l+1.d0)*c*k_current/get_H_p(x_t(i))*dTheta(i,l-1,k) - &
@@ -210,20 +208,7 @@ contains
            end do
            Psi(i,k)     = - Phi(i,k) - (12.d0*H_0**2.d0)/(c*k_current*a_t(i))**2.d0*Omega_r*Theta(i,2,k)
            ! TODO: Store derivatives that are required for C_l estimation
-           call dytc(x_t(i),y_tight_coupling,dydx)
-           dPhi(i,k)     = dydx(4)
-           dv_b(i,k)     = dydx(5)
-           dTheta(i,:,k) = dydx(6)
-           dPsi(i,k)     = dydx(7)
-           dTheta(i,2,k) = 2.d0/5.d0*c*k_current/get_H_p(x_t(i))*Theta(i,1,k) - 3.d0/5.d0*ck_current/get_H_p(x_t(i))*Theta(i,3,k)+get_dtau(x_t(i))*0.9d0*Theta(i,2,k)
-
-           do l=3,lmax_int-1
-           dTheta(i,l,k) = l/(2.d0*l+1.d0)*c*k_current/get_H_p(x_t(i))*dTheta(i,l-1,k) - &
-                       (l+1.d0)/(2.d0*l+1.d0)*c*k_current/get_H_p(x_t(i))*dTheta(i,l+1,k) +get_dtau(x_t(i))*Theta(i,l,k)
-           end do
-
-           ! Store derivatives
-           call dy(x_t(i),y,dydx)
+            call dy(x_t(i),y,dydx)
             dv_b(i,k)     = dydx(4)
             dPhi(i,k)     = dydx(5)
 
@@ -383,7 +368,7 @@ contains
     n = 1d4
     do i =0,n
       x = x_init + i*x_init/n
-      if (x<x_start_rec .and. c*k*/get_H_p(x)*dt<10.d-1 .and. get_dtau(x)>10.d0) then
+      if (x<x_start_rec .and. c*k/get_H_p(x)*dt<10.d-1 .and. get_dtau(x)>10.d0) then
         get_tight_coupling_time = x
       end if
     end do
