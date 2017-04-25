@@ -7,7 +7,7 @@ module evolution_mod
   implicit none
 
   ! Accuracy parameters
-  real(dp),     parameter, private :: a_init   = 1.d-8
+  real(dp),     parameter, private :: a_init   = 1.d-10
   real(dp),     parameter, private :: x_init   = log(a_init)
   real(dp),     parameter, private :: k_min    = 0.1d0 * H_0 / c
   real(dp),     parameter, private :: k_max    = 1.d3  * H_0 / c
@@ -63,8 +63,6 @@ contains
   end subroutine get_hires_source_function
 
 
-
-
   ! Routine for initializing and solving the Boltzmann and Einstein equations
   subroutine initialize_perturbation_eqns
     implicit none
@@ -77,10 +75,6 @@ contains
       ks(i) = ks(i-1) + (k_max-k_min)*((k-1)/(n_k-1))**2
     end do
 
-    x_t(1) = x_init
-    do i=2,n_t
-      x_t(i) = x_t(i-1) + (-x_init)/(n_t-1)
-    end do
 
     ! Allocate arrays for perturbation quantities
     allocate(Theta(0:n_t, 0:lmax_int, n_k))

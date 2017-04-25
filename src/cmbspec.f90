@@ -66,8 +66,6 @@ program cmbspec
       close (123)
       close (124)
 
-
-
       close (1)
       close (2)
       close (3)

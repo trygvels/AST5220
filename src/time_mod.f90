@@ -18,13 +18,14 @@ contains
 subroutine initialize_time_mod
   implicit none
 
-  integer(i4b) :: i, n, n1, n2
-  real(dp)     :: z_start_rec, z_end_rec, z_0, x_start_rec, x_end_rec, x_0, dx, x_eta1, x_eta2, eta_init, a_init, step, eps, stepmin, yp1,ypn, rho_cc, rho_m, rho_b, rho_r, rho_lambda, z
+  integer(i4b) :: i, n, n1, n2, n3
+  real(dp)     :: z_start_rec, z_end_rec, z_0, x_start_rec, x_end_rec, x_0, dx, x_eta1, x_eta2, eta_init, a_init, step, eps, stepmin, yp1,ypn, rho_cc, rho_m, rho_b, rho_r, rho_lambda, z,x_init
 
   ! Define two epochs, 1) during and 2) after recombination.
-  n1          = 200                       ! Number of grid points during recombination
-  n2          = 300                       ! Number of grid points after recombination
-  n_t         = n1 + n2                   ! Total number of grid points
+  n1          = 200                       ! Grid points before rec
+  n2          = 300                       ! Number of grid points during recombination!
+  n3          = 200                       ! Number of grid points after recombination
+  n_t         = n1 + n2 + n3                  ! Total number of grid points
   z_start_rec = 1630.4d0                  ! Redshift of start of recombination
   z_end_rec   = 614.2d0                   ! Redshift of end of recombination
   z_0         = 0.d0                      ! Redshift today
@@ -35,6 +36,7 @@ subroutine initialize_time_mod
   n_eta       = 1000                      ! Number of eta grid points (for spline)
   a_init      = 1.d-10                    ! Start value of a for eta evaluation
   x_eta1      = log(a_init)               ! Start value of x for eta evaluation
+  x_init      = x_eta1
   x_eta2      = 0.d0                      ! End value of x for eta evaluation
 
   yp1 = 1.d30
@@ -47,18 +49,20 @@ subroutine initialize_time_mod
   allocate(x_t(n_t))
   allocate(a_t(n_t))
 
-  x_t(1) = x_start_rec 					! initial x
-  a_t(1) = exp(x_t(1))					! initial a
-
-  do i = 2,n_t							! filling arrays
-     if (i < n1 ) then
-        dx = (x_end_rec - x_start_rec)/(n1-1) !Fixed from M1
-     else
-        dx = (x_0 - x_end_rec)/(n2)
-     end if
-     x_t(i) = x_t(i-1) + dx
-     a_t(i) = exp(x_t(i))
+  ! Rewritten x grid for M3
+  do i = 1,n1
+     x_t(i) = x_init + (i-1)*(x_start_rec-x_init)/(n1-1)
   end do
+
+  do i = 1,n2 ! During recombination
+     x_t(n1+i) = x_start_rec + i*(x_end_rec-x_start_rec)/(n2)
+  end do
+
+  do i = 1,n3 ! After recombination
+     x_t(n1+n2+i) = x_end_rec + i*(x_0-x_end_rec)/(n3)
+  end do
+
+  a_t = exp(x_t) 
 
   ! Task: 1) Compute the conformal time at each eta time step
   !       2) Spline the resulting function, using the provided "spline" routine in spline_1D_mod.f90
