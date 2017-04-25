@@ -184,7 +184,7 @@ contains
 
            ! Integrate equations from tight coupling to today
            Call odeint(y,x_t(i-1),x_t(i), eps,h1,hmin,dy, bsstep, output)
-           
+
            ! Store variables at time step i in gloabl variables
            delta(i,k)   = y(1)
            delta_b(i,k) = y(2)
@@ -196,7 +196,7 @@ contains
            end do
            Psi(i,k)     = - Phi(i,k) - (12.d0*H_0**2.d0)/(ck*a_t(i))**2.d0*Omega_r*Theta(i,2,k)
 
-           ! TODO: Store derivatives that are required for C_l estimation
+            ! Store derivatives that are required for C_l estimation
             call dy(x_t(i),y,dydx)
             dv_b(i,k)     = dydx(4)
             dPhi(i,k)     = dydx(5)
@@ -205,7 +205,6 @@ contains
             end do
             dPsi(i,k)     = -dPhi(i,k) - 12.d0*H_0**2.d0/(ck*a_t(i))**2.d0*&
                              Omega_r*(-2.d0*Theta(i,2,k)+dTheta(i,2,k))
-
          end if
        end do ! Ends i
     end do ! Ends k
