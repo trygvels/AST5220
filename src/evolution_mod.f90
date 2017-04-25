@@ -70,11 +70,9 @@ contains
     integer(i4b) :: l, i, k
     ! DONE: Initialize k-grid, ks; quadratic between k_min and k_max
     allocate(ks(n_k))
-    ks(1) = k_min
-    do i=2,n_k
-      ks(i) = ks(i-1) + (k_max-k_min)*((k-1)/(n_k-1))**2
+    do k=1,n_k
+        ks(k) = k_min +(k_max - k_min)*((k-1.d0)/(n_k-1.d0))**2
     end do
-
 
     ! Allocate arrays for perturbation quantities
     allocate(Theta(0:n_t, 0:lmax_int, n_k))
@@ -142,12 +140,12 @@ contains
        ! Integrate from x_init until the end of tight coupling, using
        !       the tight coupling equations
        x_tc = get_tight_coupling_time(k_current) !x value at start of tc
-       write(*,*) x_tc
+
        !################# 1 Grid to rule them all
        do i=1,n_t !500 points
          if (x_t(i)<x_tc) then
            !Integrate with tight coupling
-           call odeint(y_tight_coupling, x_t(i-1),x_t(i), eps,h1,hmin,dytc, bsstep, output)
+           call odeint(y_tight_coupling, x_t(i),x_t(i+1), eps,h1,hmin,dytc, bsstep, output)
            !Trenger vi egentlig bare ett punkt? Siden verdien er lik under TC??
           !Save variables one value at a time
            delta(i,k)   = y_tight_coupling(1)
