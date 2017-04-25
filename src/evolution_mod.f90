@@ -31,7 +31,7 @@ module evolution_mod
   real(dp), allocatable, dimension(:) :: ks
 
   ! Book-keeping variables
-  real(dp),     private :: k_current
+  real(dp),     private :: k_current, ck
   integer(i4b), private :: npar = 6+lmax_int
 
 contains
@@ -95,13 +95,13 @@ contains
     delta_b(0,:) = delta(0,:)
     Theta(0,0,:) = 0.5d0*Phi(0,:) !Sped up when not in loop
 
-    do i = 1, n_k
-       v(0,i)       = c*k/(2.d0*get_H_p(x_init))*Phi(0,k) !Changed from Phi(0,:) to Phi(0,k)
-       v_b(0,i)     = v(0,i)
-       Theta(0,1,i) = -c*k/(6.d0*get_H_p(x_init))*Phi(0,k)
-       Theta(0,2,i) = -20.d0*c*k/(45.d0*get_H_p(x_init)*get_dtau(x_init))*Theta(0,1,i)
+    do k = 1, n_k
+       v(0,k)       = c*k/(2.d0*get_H_p(x_init))*Phi(0,k)
+       v_b(0,k)     = v(0,k)
+       Theta(0,1,k) = -c*k/(6.d0*get_H_p(x_init))*Phi(0,k)
+       Theta(0,2,k) = -20.d0*c*k/(45.d0*get_H_p(x_init)*get_dtau(x_init))*Theta(0,1,k)
        do l = 3, lmax_int
-          Theta(0,l,i) = -l*c*k*Theta(0,l-1,i)/((2*l+1)*get_H_p(x_init)*get_dtau(x_init))
+          Theta(0,l,k) = -l*c*k*Theta(0,l-1,k)/((2*l+1)*get_H_p(x_init)*get_dtau(x_init))
        end do
     end do
 
@@ -116,6 +116,7 @@ contains
 
     real(dp), allocatable, dimension(:) :: y, y_tight_coupling, dydx
 
+    h1        = 1.d-5
     eps    = 1.d-8
     hmin   = 0.d0
     allocate(y(npar))
@@ -126,8 +127,7 @@ contains
     do k = 1, n_k
 
        k_current = ks(k)  ! Store k_current as a global module variable
-       h1        = 1.d-5
-
+       ck = k_current*c   ! One calculation for each iteration
        ! Initialize equation set for tight coupling
        y_tight_coupling(1) = delta(0,k)
        y_tight_coupling(2) = delta_b(0,k)
@@ -159,19 +159,19 @@ contains
            Phi(i,k)     = y_tight_coupling(5)
            Theta(i,0,k) = y_tight_coupling(6)
            Theta(i,1,k) = y_tight_coupling(7)
-           Theta(i,2,k) = -20.d0*c*k_current/45.d0/get_H_p(x_t(i))/get_dtau(x_t(i))*Theta(i,1,k)
+           Theta(i,2,k) = -20.d0*ck/45.d0/get_H_p(x_t(i))/get_dtau(x_t(i))*Theta(i,1,k)
            do l = 3, lmax_int
-              Theta(i,l,k) = -l/(2.d0*l+1.d0)*c*k_current/get_H_p(x_t(i))/get_dtau(x_t(i))*Theta(i,l-1,k)
+              Theta(i,l,k) = -l/(2.d0*l+1.d0)*ck/get_H_p(x_t(i))/get_dtau(x_t(i))*Theta(i,l-1,k)
            end do
            dPhi(i,k)     = dydx(4)
            dv_b(i,k)     = dydx(5)
            dTheta(i,:,k) = dydx(6)
            dPsi(i,k)     = dydx(7)
-           dTheta(i,2,k) = 2.d0/5.d0*c*k_current/get_H_p(x_t(i))*Theta(i,1,k) - 3.d0/5.d0*c*k_current/get_H_p(x_t(i))*Theta(i,3,k)+get_dtau(x_t(i))*0.9d0*Theta(i,2,k)
+           dTheta(i,2,k) = 2.d0/5.d0*ck/get_H_p(x_t(i))*Theta(i,1,k) - 3.d0/5.d0*ck/get_H_p(x_t(i))*Theta(i,3,k)+get_dtau(x_t(i))*0.9d0*Theta(i,2,k)
 
            do l=3,lmax_int-1
-           dTheta(i,l,k) = l/(2.d0*l+1.d0)*c*k_current/get_H_p(x_t(i))*dTheta(i,l-1,k) - &
-                       (l+1.d0)/(2.d0*l+1.d0)*c*k_current/get_H_p(x_t(i))*dTheta(i,l+1,k) +get_dtau(x_t(i))*Theta(i,l,k)
+           dTheta(i,l,k) = l/(2.d0*l+1.d0)*ck/get_H_p(x_t(i))*dTheta(i,l-1,k) - &
+                       (l+1.d0)/(2.d0*l+1.d0)*ck/get_H_p(x_t(i))*dTheta(i,l+1,k) +get_dtau(x_t(i))*Theta(i,l,k)
            end do
            ! STORE DERIVATIVES
            call dytc(x_t(i),y_tight_coupling,dydx)
@@ -179,11 +179,11 @@ contains
            dv_b(i,k)     = dydx(5)
            dTheta(i,:,k) = dydx(6)
            dPsi(i,k)     = dydx(7)
-           dTheta(i,2,k) = 2.d0/5.d0*c*k_current/get_H_p(x_t(i))*Theta(i,1,k) - 3.d0/5.d0*c*k_current/get_H_p(x_t(i))*Theta(i,3,k)+get_dtau(x_t(i))*0.9d0*Theta(i,2,k)
+           dTheta(i,2,k) = 2.d0/5.d0*ck/get_H_p(x_t(i))*Theta(i,1,k) - 3.d0/5.d0*ck/get_H_p(x_t(i))*Theta(i,3,k)+get_dtau(x_t(i))*0.9d0*Theta(i,2,k)
 
            do l=3,lmax_int-1
-           dTheta(i,l,k) = l/(2.d0*l+1.d0)*c*k_current/get_H_p(x_t(i))*dTheta(i,l-1,k) - &
-                       (l+1.d0)/(2.d0*l+1.d0)*c*k_current/get_H_p(x_t(i))*dTheta(i,l+1,k) +get_dtau(x_t(i))*Theta(i,l,k)
+           dTheta(i,l,k) = l/(2.d0*l+1.d0)*ck/get_H_p(x_t(i))*dTheta(i,l-1,k) - &
+                       (l+1.d0)/(2.d0*l+1.d0)*ck/get_H_p(x_t(i))*dTheta(i,l+1,k) +get_dtau(x_t(i))*Theta(i,l,k)
            end do
 
          else !#### DO INTEGRATION FOR AFTER TC ####
@@ -207,7 +207,7 @@ contains
            do l = 0, lmax_int
               Theta(i,l,k) = y(6+l)
            end do
-           Psi(i,k)     = - Phi(i,k) - (12.d0*H_0**2.d0)/(c*k_current*a_t(i))**2.d0*Omega_r*Theta(i,2,k)
+           Psi(i,k)     = - Phi(i,k) - (12.d0*H_0**2.d0)/(ck*a_t(i))**2.d0*Omega_r*Theta(i,2,k)
 
            ! TODO: Store derivatives that are required for C_l estimation
             call dy(x_t(i),y,dydx)
@@ -216,7 +216,7 @@ contains
             do l=0,lmax_int
                 dTheta(i,l,k) = dydx(6+l)
             end do
-            dPsi(i,k)     = -dPhi(i,k) - 12.d0*H_0**2.d0/(c*k_current*a_t(i))**2.d0*&
+            dPsi(i,k)     = -dPhi(i,k) - 12.d0*H_0**2.d0/(ck*a_t(i))**2.d0*&
                              Omega_r*(-2.d0*Theta(i,2,k)+dTheta(i,2,k))
 
          end if
@@ -260,12 +260,12 @@ contains
           a     = exp(x)
           H_p   = get_H_p(x)
           dH_p  = get_dH_p(x)
-          ckH_p = c*k_current/H_p
+          ckH_p = ck/H_p
 
 
           Theta2    = -20.d0*ckH_p/(45.d0*dtau)*Theta1
           R         = (4.d0*Omega_r)/(3.d0*Omega_b*a)
-          Psi       = -Phi - 12.d0*(H_0/(c*k_current*a))**2.d0*Omega_r*Theta2
+          Psi       = -Phi - 12.d0*(H_0/(ck*a))**2.d0*Omega_r*Theta2
           dPhi      = Psi -(ckH_p**2.d0)/3.d0*Phi + H_0**2.d0/(2.d0*H_p**2.d0)*(Omega_m/a*delta+Omega_b/a*delta_b+4.d0*Omega_r*Theta0/a**2.d0)
           dTheta0   = -ckH_p*Theta1 - dPhi
           d_delta   = ckH_p*v   - 3.d0*dPhi
@@ -319,12 +319,12 @@ contains
 
      a = exp(x)
      H_p = get_H_p(x)
-     ckH_p = c*k_current/H_p
+     ckH_p = ck/H_p
      dtau = get_dtau(x)
 
 
      R         = (4.d0*Omega_r)/(3.d0*Omega_b*a)
-     Psi       = -Phi - 12.d0*(H_0/c*k_current/a)**2.d0*Omega_r*Theta2
+     Psi       = -Phi - 12.d0*(H_0/ck/a)**2.d0*Omega_r*Theta2
 
      dPhi      = Psi -(ckH_p**2.d0)/3.d0*Phi + H_0**2.d0/(2.d0*H_p**2.d0)*(Omega_m/a*delta+Omega_b/a*delta_b+4.d0*Omega_r*Theta0/a**2.d0)
 
