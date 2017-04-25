@@ -92,7 +92,6 @@ contains
     delta(0,:)   = 1.5d0*Phi(0,:)
     delta_b(0,:) = delta(0,:)
     Theta(0,0,:) = 0.5d0*Phi(0,:) !Sped up when not in loop
-
     do k = 1, n_k
        v(0,k)       = c*k/(2.d0*get_H_p(x_init))*Phi(0,k)
        v_b(0,k)     = v(0,k)
@@ -126,6 +125,7 @@ contains
 
        k_current = ks(k)  ! Store k_current as a global module variable
        ck = k_current*c   ! One calculation for each iteration
+
        ! Initialize equation set for tight coupling
        y_tight_coupling(1) = delta(0,k)
        y_tight_coupling(2) = delta_b(0,k)
@@ -159,18 +159,9 @@ contains
            do l = 3, lmax_int
               Theta(i,l,k) = -l/(2.d0*l+1.d0)*ck/get_H_p(x_t(i))/get_dtau(x_t(i))*Theta(i,l-1,k)
            end do
-           dPhi(i,k)     = dydx(4)
-           dv_b(i,k)     = dydx(5)
-           dTheta(i,:,k) = dydx(6)
-           dPsi(i,k)     = dydx(7)
-           dTheta(i,2,k) = 2.d0/5.d0*ck/get_H_p(x_t(i))*Theta(i,1,k) - 3.d0/5.d0*ck/get_H_p(x_t(i))*Theta(i,3,k)+get_dtau(x_t(i))*0.9d0*Theta(i,2,k)
 
-           do l=3,lmax_int-1
-           dTheta(i,l,k) = l/(2.d0*l+1.d0)*ck/get_H_p(x_t(i))*dTheta(i,l-1,k) - &
-                       (l+1.d0)/(2.d0*l+1.d0)*ck/get_H_p(x_t(i))*dTheta(i,l+1,k) +get_dtau(x_t(i))*Theta(i,l,k)
-           end do
            ! STORE DERIVATIVES
-           call dytc(x_t(i),y_tight_coupling,dydx)
+           call dytc(x_t(i),y_tight_coupling,dydx) !Call subroutine which calculates dydx array
            dPhi(i,k)     = dydx(4)
            dv_b(i,k)     = dydx(5)
            dTheta(i,:,k) = dydx(6)
@@ -193,6 +184,7 @@ contains
 
            ! Integrate equations from tight coupling to today
            Call odeint(y,x_t(i-1),x_t(i), eps,h1,hmin,dy, bsstep, output)
+           
            ! Store variables at time step i in gloabl variables
            delta(i,k)   = y(1)
            delta_b(i,k) = y(2)
@@ -256,7 +248,6 @@ contains
           H_p   = get_H_p(x)
           dH_p  = get_dH_p(x)
           ckH_p = ck/H_p
-
 
           Theta2    = -20.d0*ckH_p/(45.d0*dtau)*Theta1
           R         = (4.d0*Omega_r)/(3.d0*Omega_b*a)
