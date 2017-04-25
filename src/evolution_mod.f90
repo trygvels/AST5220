@@ -193,7 +193,6 @@ contains
 
            ! Integrate equations from tight coupling to today
            Call odeint(y,x_t(i-1),x_t(i), eps,h1,hmin,dy, bsstep, output)
-
            ! Store variables at time step i in gloabl variables
            delta(i,k)   = y(1)
            delta_b(i,k) = y(2)
