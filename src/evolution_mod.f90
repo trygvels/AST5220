@@ -73,7 +73,6 @@ contains
     do k=1,n_k
         ks(k) = k_min +(k_max - k_min)*((k-1.d0)/(n_k-1.d0))**2
     end do
-
     ! Allocate arrays for perturbation quantities
     allocate(Theta(0:n_t, 0:lmax_int, n_k))
     allocate(delta(0:n_t, n_k))
@@ -93,12 +92,12 @@ contains
     delta_b(0,:) = delta(0,:)
     Theta(0,0,:) = 0.5d0*Phi(0,:) !Sped up when not in loop
     do k = 1, n_k
-       v(0,k)       = c*k/(2.d0*get_H_p(x_init))*Phi(0,k)
+       v(0,k)       = c*ks(k)/(2.d0*get_H_p(x_init))*Phi(0,k)
        v_b(0,k)     = v(0,k)
-       Theta(0,1,k) = -c*k/(6.d0*get_H_p(x_init))*Phi(0,k)
-       Theta(0,2,k) = -20.d0*c*k/(45.d0*get_H_p(x_init)*get_dtau(x_init))*Theta(0,1,k)
+       Theta(0,1,k) = -c*ks(k)/(6.d0*get_H_p(x_init))*Phi(0,k)
+       Theta(0,2,k) = -20.d0*c*ks(k)/(45.d0*get_H_p(x_init)*get_dtau(x_init))*Theta(0,1,k)
        do l = 3, lmax_int
-          Theta(0,l,k) = -l*c*k*Theta(0,l-1,k)/((2*l+1)*get_H_p(x_init)*get_dtau(x_init))
+          Theta(0,l,k) = -l*c*ks(k)*Theta(0,l-1,k)/((2*l+1)*get_H_p(x_init)*get_dtau(x_init))
        end do
     end do
 
@@ -144,6 +143,7 @@ contains
        !################# 1 Grid to rule them all
        do i=1,n_t !700 points
          if (x_t(i)<x_tc) then
+           !j = i+1 !This maybe? For x-grid
            !Integrate with tight coupling
            call odeint(y_tight_coupling, x_t(i),x_t(i+1), eps,h1,hmin,dytc, bsstep, output)
            !Trenger vi egentlig bare ett punkt? Siden verdien er lik under TC??
@@ -159,6 +159,7 @@ contains
            do l = 3, lmax_int
               Theta(i,l,k) = -l/(2.d0*l+1.d0)*ck/get_H_p(x_t(i))/get_dtau(x_t(i))*Theta(i,l-1,k)
            end do
+           Psi(i,k)      = -Phi(i,k) - 12.d0*H_0**2.d0/(ck*exp(x_t(i)))**2.d0*Omega_r*Theta(i,2,k)
 
            ! STORE DERIVATIVES
            call dytc(x_t(i),y_tight_coupling,dydx) !Call subroutine which calculates dydx array
@@ -172,6 +173,8 @@ contains
            dTheta(i,l,k) = l/(2.d0*l+1.d0)*ck/get_H_p(x_t(i))*dTheta(i,l-1,k) - &
                        (l+1.d0)/(2.d0*l+1.d0)*ck/get_H_p(x_t(i))*dTheta(i,l+1,k) +get_dtau(x_t(i))*Theta(i,l,k)
            end do
+
+           dPsi(i,k)     = -dPhi(i,k) - 12.d0*H_0**2.d0/(ck*exp(x_t(i)))**2.d0 *Omega_r*(-2.d0*Theta(i,2,k)+dTheta(i,2,k))
          else
            i_tc = i
            exit
