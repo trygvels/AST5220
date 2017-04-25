@@ -67,7 +67,7 @@ contains
   subroutine initialize_perturbation_eqns
     implicit none
 
-    integer(i4b) :: l, i, k
+    integer(i4b) :: l, i, k, i_tc
     ! DONE: Initialize k-grid, ks; quadratic between k_min and k_max
     allocate(ks(n_k))
     do k=1,n_k
@@ -107,7 +107,7 @@ contains
   subroutine integrate_perturbation_eqns
     implicit none
 
-    integer(i4b) :: i, k, l
+    integer(i4b) :: i, k, l, i_tc
     real(dp)     :: x1, x2
     real(dp)     :: eps, hmin, h1, x_tc, H_p, dt
 
@@ -142,7 +142,7 @@ contains
        x_tc = get_tight_coupling_time(k_current) !x value at start of tc
 
        !################# 1 Grid to rule them all
-       do i=1,n_t !500 points
+       do i=1,n_t !700 points
          if (x_t(i)<x_tc) then
            !Integrate with tight coupling
            call odeint(y_tight_coupling, x_t(i),x_t(i+1), eps,h1,hmin,dytc, bsstep, output)
@@ -172,16 +172,20 @@ contains
            dTheta(i,l,k) = l/(2.d0*l+1.d0)*ck/get_H_p(x_t(i))*dTheta(i,l-1,k) - &
                        (l+1.d0)/(2.d0*l+1.d0)*ck/get_H_p(x_t(i))*dTheta(i,l+1,k) +get_dtau(x_t(i))*Theta(i,l,k)
            end do
+         else
+           i_tc = i
+           exit
+         end if
+       end do
+       !Save initital conditions for next integration
+       y(1:7) = y_tight_coupling(1:7)
+       y(8)   = Theta(i_tc-1,2,k) !Save last index of tight coupling
+       do l = 3, lmax_int
+          y(6+l) = Theta(i_tc-1,l,k)
+       end do
 
-         else !#### DO INTEGRATION FOR AFTER TC ####
-
-           !Save initital conditions for next integration
-           y(1:7) = y_tight_coupling(1:7)
-           y(8)   = Theta(i-1,2,k) !Save last index of tight coupling
-           do l = 3, lmax_int
-              y(6+l) = Theta(i-1,l,k)
-           end do
-
+       !#### DO INTEGRATION FOR AFTER TC ####
+      do i = i_tc, n_t
            ! Integrate equations from tight coupling to today
            Call odeint(y,x_t(i-1),x_t(i), eps,h1,hmin,dy, bsstep, output)
 
@@ -205,7 +209,6 @@ contains
             end do
             dPsi(i,k)     = -dPhi(i,k) - 12.d0*H_0**2.d0/(ck*a_t(i))**2.d0*&
                              Omega_r*(-2.d0*Theta(i,2,k)+dTheta(i,2,k))
-         end if
        end do ! Ends i
     end do ! Ends k
 
