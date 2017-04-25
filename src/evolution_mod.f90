@@ -116,7 +116,7 @@ contains
 
     real(dp), allocatable, dimension(:) :: y, y_tight_coupling, dydx
 
-    h1        = 1.d-5
+    h1     = 1.d-5
     eps    = 1.d-8
     hmin   = 0.d0
     allocate(y(npar))
@@ -142,15 +142,13 @@ contains
        ! Integrate from x_init until the end of tight coupling, using
        !       the tight coupling equations
        x_tc = get_tight_coupling_time(k_current) !x value at start of tc
-
+       write(*,*) x_tc
        !################# 1 Grid to rule them all
        do i=1,n_t !500 points
          if (x_t(i)<x_tc) then
-
            !Integrate with tight coupling
            call odeint(y_tight_coupling, x_t(i-1),x_t(i), eps,h1,hmin,dytc, bsstep, output)
            !Trenger vi egentlig bare ett punkt? Siden verdien er lik under TC??
-
           !Save variables one value at a time
            delta(i,k)   = y_tight_coupling(1)
            delta_b(i,k) = y_tight_coupling(2)
@@ -364,13 +362,12 @@ contains
     implicit none
     integer(i4b)          :: i,n
     real(dp), intent(in)  :: k
-    real(dp)              :: get_tight_coupling_time, x, x_init, x_start_rec
+    real(dp)              :: get_tight_coupling_time, x, x_start_rec
     x_start_rec = -log(1.d0 + 1630.4d0 )  ! x of start of recombination
-    x_init= log(1.d-8)
     n = 1d4
-    do i =0,n
-      x = x_init + i*x_init/n
-      if (x<x_start_rec .and. c*k/get_H_p(x)*get_dtau(x)<10.d-1 .and. get_dtau(x)>10.d0) then
+    do i = 0,n
+      x = x_init - i*x_init/n
+      if (x < x_start_rec .and. abs(c*k/(get_H_p(x)*get_dtau(x))) <= 0.1d0 .and. abs(get_dtau(x)) > 10.d0) then
         get_tight_coupling_time = x
       end if
     end do
