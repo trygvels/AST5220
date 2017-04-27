@@ -148,47 +148,42 @@ contains
        x_tc = get_tight_coupling_time(k_current)
 
        ! Integrate from in tight coupling regime
-       do i=2,n_t
-         if (x_t(i)<x_tc) then
+       i_tc = 2
+       do while (x_t(i_tc)<x_tc)
            !Integrate with tight coupling
-           call odeint(y_tight_coupling, x_t(i-1),x_t(i), eps, h1, hmin, dytc, bsstep, output)
-           ckH_p        = ck*get_H_p(x_t(i))
-           dt           = get_dtau(x_t(i))
+           call odeint(y_tight_coupling, x_t(i_tc-1),x_t(i_tc), eps, h1, hmin, dytc, bsstep, output)
+           ckH_p        = ck*get_H_p(x_t(i_tc))
+           dt           = get_dtau(x_t(i_tc))
            !Save variables one value at a time
-           delta(i,k)   = y_tight_coupling(1)
-           delta_b(i,k) = y_tight_coupling(2)
-           v(i,k)       = y_tight_coupling(3)
-           v_b(i,k)     = y_tight_coupling(4)
-           Phi(i,k)     = y_tight_coupling(5)
-           Theta(i,0,k) = y_tight_coupling(6)
-           Theta(i,1,k) = y_tight_coupling(7)
-           Theta(i,2,k) = -20.d0*ckH_p/45.d0/dt*Theta(i,1,k)
+           delta(i_tc,k)   = y_tight_coupling(1)
+           delta_b(i_tc,k) = y_tight_coupling(2)
+           v(i_tc,k)       = y_tight_coupling(3)
+           v_b(i_tc,k)     = y_tight_coupling(4)
+           Phi(i_tc,k)     = y_tight_coupling(5)
+           Theta(i_tc,0,k) = y_tight_coupling(6)
+           Theta(i_tc,1,k) = y_tight_coupling(7)
+           Theta(i_tc,2,k) = -20.d0*ckH_p/45.d0/dt*Theta(i_tc,1,k)
            do l = 3, lmax_int
-              Theta(i,l,k) = -l/(2.d0*l+1.d0)*ckH_p/dt*Theta(i,l-1,k)
+              Theta(i_tc,l,k) = -l/(2.d0*l+1.d0)*ckH_p/dt*Theta(i_tc,l-1,k)
            end do
-           Psi(i,k)      = -Phi(i,k) - 12.d0*H_0**2.d0/(ck*exp(x_t(i)))**2.d0*Omega_r*Theta(i,2,k)
+           Psi(i_tc,k)      = -Phi(i_tc,k) - 12.d0*H_0**2.d0/(ck*exp(x_t(i_tc)))**2.d0*Omega_r*Theta(i_tc,2,k)
 
            ! STORE DERIVATIVES
-           call dytc(x_t(i),y_tight_coupling,dydx) !Call subroutine which calculates dydx array
-           dPhi(i,k)     = dydx(4)
-           dv_b(i,k)     = dydx(5)
-           dTheta(i,:,k) = dydx(6)
-           dPsi(i,k)     = dydx(7)
-           dTheta(i,2,k) = 2.d0/5.d0*ckH_p*Theta(i,1,k) - 3.d0/5.d0*ckH_p*Theta(i,3,k)+dt*0.9d0*Theta(i,2,k)
+           call dytc(x_t(i_tc),y_tight_coupling,dydx) !Call subroutine which calculates dydx array
+           dPhi(i_tc,k)     = dydx(4)
+           dv_b(i_tc,k)     = dydx(5)
+           dTheta(i_tc,:,k) = dydx(6)
+           dPsi(i_tc,k)     = dydx(7)
+           dTheta(i_tc,2,k) = 2.d0/5.d0*ckH_p*Theta(i_tc,1,k) - 3.d0/5.d0*ckH_p*Theta(i_tc,3,k)+dt*0.9d0*Theta(i_tc,2,k)
 
            do l=3,lmax_int-1
-           dTheta(i,l,k) = l/(2.d0*l+1.d0)*ckH_p*dTheta(i,l-1,k) - &
-                       (l+1.d0)/(2.d0*l+1.d0)*ckH_p*dTheta(i,l+1,k) +dt*Theta(i,l,k)
+           dTheta(i_tc,l,k) = l/(2.d0*l+1.d0)*ckH_p*dTheta(i_tc,l-1,k) - &
+                       (l+1.d0)/(2.d0*l+1.d0)*ckH_p*dTheta(i_tc,l+1,k) + dt*Theta(i_tc,l,k)
            end do
 
-           dPsi(i,k)     = -dPhi(i,k) - 12.d0*H_0**2.d0/(ck*exp(x_t(i)))**2.d0 *Omega_r*(-2.d0*Theta(i,2,k)+dTheta(i,2,k))
-
-         else
-           i_tc = i !Save index at which tight coupling ends
-           exit
-         end if
-
-       end do
+           dPsi(i_tc,k)     = -dPhi(i_tc,k) - 12.d0*H_0**2.d0/(ck*exp(x_t(i_tc)))**2.d0 *Omega_r*(-2.d0*Theta(i_tc,2,k)+dTheta(i_tc,2,k))
+           i_tc = i_tc + 1
+       end do ! ends while
 
        !Save initital conditions for next integration
        y(1:7) = y_tight_coupling(1:7)
@@ -335,8 +330,7 @@ contains
      d_delta_b = ckH_p*v_b - 3.d0*dPhi
      d_v       = - v - ckH_p*Psi
      dv_b      = - v_b - ckH_p*Psi + dt*R*(3.d0*Theta1+v_b)
-     dTheta1   = ckH_p/3.d0*Theta0 - 2.d0/3.d0*ckH_p*Theta2 + &
-                 ckH_p/3.d0*Psi + dt*(Theta1+v_b/3.d0)
+     dTheta1   = ckH_p/3.d0*Theta0 - 2.d0/3.d0*ckH_p*Theta2 + ckH_p/3.d0*Psi + dt*(Theta1+v_b/3.d0)
      dTheta2   = 2.d0/5.d0*ckH_p*Theta1 - 3.d0/5.d0*ckH_p*Theta3+dt*0.9d0*Theta2
 
      do l=3,lmax_int-1
