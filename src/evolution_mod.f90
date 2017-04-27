@@ -99,8 +99,11 @@ contains
     delta_b(1,:) = delta(1,:)
     Theta(1,0,:) = 0.5d0*Phi(1,:)
     do k = 1, n_k
+
+      ! Effectivisation
        ckH_p        = c*ks(k)/get_H_p(x_init)
        dt           = get_dtau(x_init)
+
        v(1,k)       = ckH_p/(2.d0)*Phi(0,k)
        v_b(1,k)     = v(0,k)
        Theta(1,1,k) = -ckH_p/(6.d0)*Phi(0,k)
@@ -152,8 +155,11 @@ contains
        do while (x_t(i_tc)<x_tc)
            !Integrate with tight coupling
            call odeint(y_tight_coupling, x_t(i_tc-1),x_t(i_tc), eps, h1, hmin, dytc, bsstep, output)
+
+           ! Effectivisation
            ckH_p        = ck*get_H_p(x_t(i_tc))
            dt           = get_dtau(x_t(i_tc))
+
            !Save variables one value at a time
            delta(i_tc,k)   = y_tight_coupling(1)
            delta_b(i_tc,k) = y_tight_coupling(2)
@@ -166,9 +172,9 @@ contains
            do l = 3, lmax_int
               Theta(i_tc,l,k) = -l/(2.d0*l+1.d0)*ckH_p/dt*Theta(i_tc,l-1,k)
            end do
-           !Psi(i_tc,k)      = -Phi(i_tc,k) - 12.d0*H_0**2.d0/(ck*exp(x_t(i_tc)))**2.d0*Omega_r*Theta(i_tc,2,k)
+           Psi(i_tc,k)      = -Phi(i_tc,k) - 12.d0*H_0**2.d0/(ck*exp(x_t(i_tc)))**2.d0*Omega_r*Theta(i_tc,2,k)
 
-           ! STORE DERIVATIVES
+           ! Storing derivatives
            call dytc(x_t(i_tc),y_tight_coupling,dydx) !Call subroutine which calculates dydx array
            dPhi(i_tc,k)     = dydx(4)
            dv_b(i_tc,k)     = dydx(5)
@@ -181,7 +187,7 @@ contains
                        (l+1.d0)/(2.d0*l+1.d0)*ckH_p*dTheta(i_tc,l+1,k) + dt*Theta(i_tc,l,k)
            end do
 
-           !dPsi(i_tc,k)     = -dPhi(i_tc,k) - 12.d0*H_0**2.d0/(ck*exp(x_t(i_tc)))**2.d0 *Omega_r*(-2.d0*Theta(i_tc,2,k)+dTheta(i_tc,2,k))
+           dPsi(i_tc,k)     = -dPhi(i_tc,k) - 12.d0*H_0**2.d0/(ck*exp(x_t(i_tc)))**2.d0 *Omega_r*(-2.d0*Theta(i_tc,2,k)+dTheta(i_tc,2,k))
 
            i_tc = i_tc + 1 !iteration
        end do ! ends while
@@ -207,7 +213,7 @@ contains
            do l = 0, lmax_int
               Theta(i,l,k) = y(6+l)
            end do
-           !Psi(i,k)     = - Phi(i,k) - (12.d0*H_0**2.d0)/(ck*a_t(i))**2.d0*Omega_r*Theta(i,2,k)
+           Psi(i,k)     = - Phi(i,k) - (12.d0*H_0**2.d0)/(ck*a_t(i))**2.d0*Omega_r*Theta(i,2,k)
 
             ! Store derivatives that are required for C_l estimation
             call dy(x_t(i),y,dydx) !Call derivatives subroutine
@@ -216,8 +222,7 @@ contains
             do l=0,lmax_int
                 dTheta(i,l,k) = dydx(6+l)
             end do
-            !dPsi(i,k)     = -dPhi(i,k) - 12.d0*H_0**2.d0/(ck*a_t(i))**2.d0*&
-            !                 Omega_r*(-2.d0*Theta(i,2,k)+dTheta(i,2,k))
+            dPsi(i,k)     = -dPhi(i,k) - 12.d0*H_0**2.d0/(ck*a_t(i))**2.d0*Omega_r*(-2.d0*Theta(i,2,k)+dTheta(i,2,k))
        end do ! Ends i
     end do ! Ends k
 
@@ -239,7 +244,6 @@ contains
           real(dp) :: d_delta_b
           real(dp) :: d_v
           real(dp) :: q,R
-
           real(dp) :: delta,delta_b,v,v_b,Phi,Theta0,Theta1,Theta2
           real(dp) :: Psi,dPhi,dTheta0,dv_b,dTheta1
           real(dp) :: dt,a,H_p,dH_p,ckH_p
@@ -254,7 +258,7 @@ contains
           Theta1  = y_tc(7)
 
           ! Variables for effectivisation
-          dt  = get_dtau(x)
+          dt    = get_dtau(x)
           a     = exp(x)
           H_p   = get_H_p(x)
           dH_p  = get_dH_p(x)
