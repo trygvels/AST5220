@@ -104,9 +104,9 @@ contains
        ckH_p        = c*ks(k)/get_H_p(x_init)
        dt           = get_dtau(x_init)
 
-       v(1,k)       = ckH_p/(2.d0)*Phi(0,k)
-       v_b(1,k)     = v(0,k)
-       Theta(1,1,k) = -ckH_p/(6.d0)*Phi(0,k)
+       v(1,k)       = ckH_p/(2.d0)*Phi(1,k)
+       v_b(1,k)     = v(1,k)
+       Theta(1,1,k) = -ckH_p/(6.d0)*Phi(1,k)
        Theta(1,2,k) = -20.d0*ckH_p/(45.d0*dt)*Theta(1,1,k)
        do l = 3, lmax_int
           Theta(1,l,k) = -l*ckH_P*Theta(1,l-1,k)/((2*l+1)*dt)
