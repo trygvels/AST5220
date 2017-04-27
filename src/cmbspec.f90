@@ -49,7 +49,7 @@ program cmbspec
   open(8,file="dPhi.dat",action="write",status="replace")
   open(9,file="dPsi.dat",action="write",status="replace")
 
-  do i=0,n_t
+  do i=1,n_t
       write(1,'(*(2X, ES14.6))') delta(i,1),delta(i,5),delta(i,10),delta(i,40),delta(i,60),delta(i,100)
       write(2,'(*(2X, ES14.6))') delta_b(i,1),delta_b(i,5),delta_b(i,10),delta_b(i,40),delta_b(i,60),delta_b(i,100)
       write(3,'(*(2X, ES14.6))') v(i,1),v(i,5),v(i,10),v(i,40),v(i,60),v(i,100)
