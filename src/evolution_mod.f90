@@ -74,30 +74,30 @@ contains
         ks(k) = k_min +(k_max - k_min)*((k-1.d0)/(n_k-1.d0))**2
     end do
     ! Allocate arrays for perturbation quantities
-    allocate(Theta(0:n_t, 0:lmax_int, n_k))
-    allocate(delta(0:n_t, n_k))
-    allocate(delta_b(0:n_t, n_k))
-    allocate(v(0:n_t, n_k))
-    allocate(v_b(0:n_t, n_k))
-    allocate(Phi(0:n_t, n_k))
-    allocate(Psi(0:n_t, n_k))
-    allocate(dPhi(0:n_t, n_k))
-    allocate(dPsi(0:n_t, n_k))
-    allocate(dv_b(0:n_t, n_k))
-    allocate(dTheta(0:n_t, 0:lmax_int, n_k))
+    allocate(Theta(n_t, 0:lmax_int, n_k))
+    allocate(delta(n_t, n_k))
+    allocate(delta_b(n_t, n_k))
+    allocate(v(n_t, n_k))
+    allocate(v_b(n_t, n_k))
+    allocate(Phi(n_t, n_k))
+    allocate(Psi(n_t, n_k))
+    allocate(dPhi(n_t, n_k))
+    allocate(dPsi(n_t, n_k))
+    allocate(dv_b(n_t, n_k))
+    allocate(dTheta(n_t, 0:lmax_int, n_k))
 
     ! Set up initial conditions for the Boltzmann and Einstein equations
-    Phi(0,:)     = 1d0
-    delta(0,:)   = 1.5d0*Phi(0,:)
-    delta_b(0,:) = delta(0,:)
-    Theta(0,0,:) = 0.5d0*Phi(0,:) !Sped up when not in loop
+    Phi(1,:)     = 1d0
+    delta(1,:)   = 1.5d0*Phi(1,:)
+    delta_b(1,:) = delta(1,:)
+    Theta(1,0,:) = 0.5d0*Phi(1,:) !Sped up when not in loop
     do k = 1, n_k
-       v(0,k)       = c*ks(k)/(2.d0*get_H_p(x_init))*Phi(0,k)
-       v_b(0,k)     = v(0,k)
-       Theta(0,1,k) = -c*ks(k)/(6.d0*get_H_p(x_init))*Phi(0,k)
-       Theta(0,2,k) = -20.d0*c*ks(k)/(45.d0*get_H_p(x_init)*get_dtau(x_init))*Theta(0,1,k)
+       v(1,k)       = c*ks(k)/(2.d0*get_H_p(x_init))*Phi(0,k)
+       v_b(1,k)     = v(0,k)
+       Theta(1,1,k) = -c*ks(k)/(6.d0*get_H_p(x_init))*Phi(0,k)
+       Theta(1,2,k) = -20.d0*c*ks(k)/(45.d0*get_H_p(x_init)*get_dtau(x_init))*Theta(0,1,k)
        do l = 3, lmax_int
-          Theta(0,l,k) = -l*c*ks(k)*Theta(0,l-1,k)/((2*l+1)*get_H_p(x_init)*get_dtau(x_init))
+          Theta(1,l,k) = -l*c*ks(k)*Theta(1,l-1,k)/((2*l+1)*get_H_p(x_init)*get_dtau(x_init))
        end do
     end do
 
@@ -128,13 +128,13 @@ contains
        ck = k_current*c   ! One calculation for each iteration
 
        ! Initialize equation set for tight coupling
-       y_tight_coupling(1) = delta(0,k)
-       y_tight_coupling(2) = delta_b(0,k)
-       y_tight_coupling(3) = v(0,k)
-       y_tight_coupling(4) = v_b(0,k)
-       y_tight_coupling(5) = Phi(0,k)
-       y_tight_coupling(6) = Theta(0,0,k)
-       y_tight_coupling(7) = Theta(0,1,k)
+       y_tight_coupling(1) = delta(1,k)
+       y_tight_coupling(2) = delta_b(1,k)
+       y_tight_coupling(3) = v(1,k)
+       y_tight_coupling(4) = v_b(1,k)
+       y_tight_coupling(5) = Phi(1,k)
+       y_tight_coupling(6) = Theta(1,0,k)
+       y_tight_coupling(7) = Theta(1,1,k)
 
        ! Find the time to which tight coupling is assumed,
        ! and integrate equations to that time
@@ -143,11 +143,11 @@ contains
        x_tc = get_tight_coupling_time(k_current) !x value at start of tc
 
        !################# 1 Grid to rule them all
-       do i=1,n_t !700 points
+       do i=2,n_t !700 points
          if (x_t(i)<x_tc) then
            !j = i+1 !This maybe? For x-grid
            !Integrate with tight coupling
-           call odeint(y_tight_coupling, x_t(i),x_t(i+1), eps,h1,hmin,dytc, bsstep, output)
+           call odeint(y_tight_coupling, x_t(i-1),x_t(i), eps,h1,hmin,dytc, bsstep, output)
            !Trenger vi egentlig bare ett punkt? Siden verdien er lik under TC??
           !Save variables one value at a time
            delta(i,k)   = y_tight_coupling(1)
