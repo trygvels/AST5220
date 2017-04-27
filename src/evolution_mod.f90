@@ -31,8 +31,12 @@ module evolution_mod
   real(dp), allocatable, dimension(:) :: ks
 
   ! Book-keeping variables
-  real(dp),     private :: k_current, ck
+  real(dp),     private :: k_current
   integer(i4b), private :: npar = 6+lmax_int
+
+  ! Effectivisation variables
+  real(dp),     private :: ck, ckH_p, dt, a !dt = dtau
+
 
 contains
 
@@ -62,17 +66,14 @@ contains
 
   end subroutine get_hires_source_function
 
+  !######### MILESTONE 3 #########
 
   ! Routine for initializing and solving the Boltzmann and Einstein equations
   subroutine initialize_perturbation_eqns
     implicit none
 
     integer(i4b) :: l, i, k, i_tc
-    ! DONE: Initialize k-grid, ks; quadratic between k_min and k_max
-    allocate(ks(n_k))
-    do k=1,n_k
-        ks(k) = k_min +(k_max - k_min)*((k-1.d0)/(n_k-1.d0))**2
-    end do
+
     ! Allocate arrays for perturbation quantities
     allocate(Theta(n_t, 0:lmax_int, n_k))
     allocate(delta(n_t, n_k))
@@ -86,31 +87,38 @@ contains
     allocate(dv_b(n_t, n_k))
     allocate(dTheta(n_t, 0:lmax_int, n_k))
 
-    ! Set up initial conditions for the Boltzmann and Einstein equations
+    ! Initialize k-grid, ks; quadratic between k_min and k_max
+    allocate(ks(n_k))
+    do k=1,n_k
+        ks(k) = k_min +(k_max - k_min)*((k-1.d0)/(n_k-1.d0))**2
+    end do
+
+    ! Initial contitions for B-E-equations
     Phi(1,:)     = 1d0
     delta(1,:)   = 1.5d0*Phi(1,:)
     delta_b(1,:) = delta(1,:)
-    Theta(1,0,:) = 0.5d0*Phi(1,:) !Sped up when not in loop
+    Theta(1,0,:) = 0.5d0*Phi(1,:)
     do k = 1, n_k
-       v(1,k)       = c*ks(k)/(2.d0*get_H_p(x_init))*Phi(0,k)
+       ckH_p        = c*ks(k)/get_H_p(x_init)
+       dt           = get_dtau(x_init)
+       v(1,k)       = ckH_p/(2.d0)*Phi(0,k)
        v_b(1,k)     = v(0,k)
-       Theta(1,1,k) = -c*ks(k)/(6.d0*get_H_p(x_init))*Phi(0,k)
-       Theta(1,2,k) = -20.d0*c*ks(k)/(45.d0*get_H_p(x_init)*get_dtau(x_init))*Theta(1,1,k)
+       Theta(1,1,k) = -ckH_p/(6.d0)*Phi(0,k)
+       Theta(1,2,k) = -20.d0*ckH_p/(45.d0*dt)*Theta(1,1,k)
        do l = 3, lmax_int
-          Theta(1,l,k) = -l*c*ks(k)*Theta(1,l-1,k)/((2*l+1)*get_H_p(x_init)*get_dtau(x_init))
+          Theta(1,l,k) = -l*ckH_P*Theta(1,l-1,k)/((2*l+1)*dt)
        end do
+       Psi(1,k)     = -Phi(1,k) - 12.d0*H_0**2/(ks(k)*c*a_t(1))**2*Omega_r*Theta(1,2,k)
     end do
 
   end subroutine initialize_perturbation_eqns
 
-  ! TODO: I HAVE RESULTS, HOWEVER, X IS SHIFTED AND DATA CONTAINS 701 POINTS. FIX AND CLEAN CODE!
 
   subroutine integrate_perturbation_eqns
     implicit none
 
     integer(i4b) :: i, k, l, i_tc
-    real(dp)     :: x1, x2
-    real(dp)     :: eps, hmin, h1, x_tc, H_p, dt
+    real(dp)     :: eps, hmin, h1, x_tc, dt
 
     real(dp), allocatable, dimension(:) :: y, y_tight_coupling, dydx
 
@@ -136,20 +144,17 @@ contains
        y_tight_coupling(6) = Theta(1,0,k)
        y_tight_coupling(7) = Theta(1,1,k)
 
-       ! Find the time to which tight coupling is assumed,
-       ! and integrate equations to that time
-       ! Integrate from x_init until the end of tight coupling, using
-       !       the tight coupling equations
-       x_tc = get_tight_coupling_time(k_current) !x value at start of tc
+       ! Find the time to which tight coupling is assumed
+       x_tc = get_tight_coupling_time(k_current)
 
-       !################# 1 Grid to rule them all
-       do i=2,n_t !700 points
+       ! Integrate from in tight coupling regime
+       do i=2,n_t
          if (x_t(i)<x_tc) then
-           !j = i+1 !This maybe? For x-grid
            !Integrate with tight coupling
-           call odeint(y_tight_coupling, x_t(i-1),x_t(i), eps,h1,hmin,dytc, bsstep, output)
-           !Trenger vi egentlig bare ett punkt? Siden verdien er lik under TC??
-          !Save variables one value at a time
+           call odeint(y_tight_coupling, x_t(i-1),x_t(i), eps, h1, hmin, dytc, bsstep, output)
+           ckH_p        = ck*get_H_p(x_t(i))
+           dt           = get_dtau(x_t(i))
+           !Save variables one value at a time
            delta(i,k)   = y_tight_coupling(1)
            delta_b(i,k) = y_tight_coupling(2)
            v(i,k)       = y_tight_coupling(3)
@@ -157,9 +162,9 @@ contains
            Phi(i,k)     = y_tight_coupling(5)
            Theta(i,0,k) = y_tight_coupling(6)
            Theta(i,1,k) = y_tight_coupling(7)
-           Theta(i,2,k) = -20.d0*ck/45.d0/get_H_p(x_t(i))/get_dtau(x_t(i))*Theta(i,1,k)
+           Theta(i,2,k) = -20.d0*ckH_p/45.d0/dt*Theta(i,1,k)
            do l = 3, lmax_int
-              Theta(i,l,k) = -l/(2.d0*l+1.d0)*ck/get_H_p(x_t(i))/get_dtau(x_t(i))*Theta(i,l-1,k)
+              Theta(i,l,k) = -l/(2.d0*l+1.d0)*ckH_p/dt*Theta(i,l-1,k)
            end do
            Psi(i,k)      = -Phi(i,k) - 12.d0*H_0**2.d0/(ck*exp(x_t(i)))**2.d0*Omega_r*Theta(i,2,k)
 
@@ -169,19 +174,22 @@ contains
            dv_b(i,k)     = dydx(5)
            dTheta(i,:,k) = dydx(6)
            dPsi(i,k)     = dydx(7)
-           dTheta(i,2,k) = 2.d0/5.d0*ck/get_H_p(x_t(i))*Theta(i,1,k) - 3.d0/5.d0*ck/get_H_p(x_t(i))*Theta(i,3,k)+get_dtau(x_t(i))*0.9d0*Theta(i,2,k)
+           dTheta(i,2,k) = 2.d0/5.d0*ckH_p*Theta(i,1,k) - 3.d0/5.d0*ckH_p*Theta(i,3,k)+dt*0.9d0*Theta(i,2,k)
 
            do l=3,lmax_int-1
-           dTheta(i,l,k) = l/(2.d0*l+1.d0)*ck/get_H_p(x_t(i))*dTheta(i,l-1,k) - &
-                       (l+1.d0)/(2.d0*l+1.d0)*ck/get_H_p(x_t(i))*dTheta(i,l+1,k) +get_dtau(x_t(i))*Theta(i,l,k)
+           dTheta(i,l,k) = l/(2.d0*l+1.d0)*ckH_p*dTheta(i,l-1,k) - &
+                       (l+1.d0)/(2.d0*l+1.d0)*ckH_p*dTheta(i,l+1,k) +dt*Theta(i,l,k)
            end do
 
            dPsi(i,k)     = -dPhi(i,k) - 12.d0*H_0**2.d0/(ck*exp(x_t(i)))**2.d0 *Omega_r*(-2.d0*Theta(i,2,k)+dTheta(i,2,k))
+
          else
-           i_tc = i
+           i_tc = i !Save index at which tight coupling ends
            exit
          end if
+
        end do
+
        !Save initital conditions for next integration
        y(1:7) = y_tight_coupling(1:7)
        y(8)   = Theta(i_tc-1,2,k) !Save last index of tight coupling
@@ -206,7 +214,7 @@ contains
            Psi(i,k)     = - Phi(i,k) - (12.d0*H_0**2.d0)/(ck*a_t(i))**2.d0*Omega_r*Theta(i,2,k)
 
             ! Store derivatives that are required for C_l estimation
-            call dy(x_t(i),y,dydx)
+            call dy(x_t(i),y,dydx) !Call derivatives subroutine
             dv_b(i,k)     = dydx(4)
             dPhi(i,k)     = dydx(5)
             do l=0,lmax_int
@@ -238,9 +246,9 @@ contains
 
           real(dp) :: delta,delta_b,v,v_b,Phi,Theta0,Theta1,Theta2
           real(dp) :: Psi,dPhi,dTheta0,dv_b,dTheta1
-          real(dp) :: dtau,ddtau,a,H_p,dH_p,ckH_p
+          real(dp) :: dt,a,H_p,dH_p,ckH_p
 
-
+          ! Save variables for derivation
           delta   = y_tc(1)
           delta_b = y_tc(2)
           v       = y_tc(3)
@@ -249,14 +257,15 @@ contains
           Theta0  = y_tc(6)
           Theta1  = y_tc(7)
 
-          dtau  = get_dtau(x)
-          ddtau = get_ddtau(x)
+          ! Variables for effectivisation
+          dt  = get_dtau(x)
           a     = exp(x)
           H_p   = get_H_p(x)
           dH_p  = get_dH_p(x)
           ckH_p = ck/H_p
 
-          Theta2    = -20.d0*ckH_p/(45.d0*dtau)*Theta1
+          ! Calculate derivatives
+          Theta2    = -20.d0*ckH_p/(45.d0*dt)*Theta1
           R         = (4.d0*Omega_r)/(3.d0*Omega_b*a)
           Psi       = -Phi - 12.d0*(H_0/(ck*a))**2.d0*Omega_r*Theta2
           dPhi      = Psi -(ckH_p**2.d0)/3.d0*Phi + H_0**2.d0/(2.d0*H_p**2.d0)*(Omega_m/a*delta+Omega_b/a*delta_b+4.d0*Omega_r*Theta0/a**2.d0)
@@ -264,14 +273,15 @@ contains
           d_delta   = ckH_p*v   - 3.d0*dPhi
           d_delta_b = ckH_p*v_b - 3.d0*dPhi
           d_v       = -v -ckH_p*Psi
-          q         = ( -((1.d0-2.d0*R)*dtau + (1.d0+R)*ddtau) *&
+          q         = ( -((1.d0-2.d0*R)*dt + (1.d0+R)*get_ddtau(x)) *&
                       (3.d0*Theta1+v_b) - ckH_p*Psi +(1.d0-dH_p/H_p)*&
                       ckH_p*(-Theta0 + 2.d0*Theta2) - ckH_p*dTheta0) / &
-                      ((1.d0+R)*dtau+dH_p/H_p -1.d0)
+                      ((1.d0+R)*dt+dH_p/H_p -1.d0)
           dv_b      = (1.d0/(1.d0+R)) *(-v_b - ckH_p*Psi + &
                       R*(q+ckH_p*(-Theta0 + 2.d0*Theta2)-ckH_p*Psi))
           dTheta1   = (1.d0/3.d0)*(q-dv_b)
 
+          ! Store derivatives
           dydx(1) = d_delta
           dydx(2) = d_delta_b
           dydx(3) = d_v
@@ -279,6 +289,7 @@ contains
           dydx(5) = dPhi
           dydx(6) = dTheta0
           dydx(7) = dTheta1
+
   end subroutine dytc
   ! Derivatives for integration of y
   subroutine dy(x,y, dydx)
@@ -288,15 +299,14 @@ contains
      real(dp), dimension(:), intent(in)  :: y
      real(dp), dimension(:), intent(out) :: dydx
 
-     real(dp) :: d_delta
-     real(dp) :: d_delta_b
-     real(dp) :: d_v
-     real(dp) :: R
      integer(i4b) :: l
-     real(dp) :: delta,delta_b,v,v_b,Phi,Theta0,Theta1,Theta2,Theta3,Theta4,Theta5,Theta6
-     real(dp) :: Psi,dPhi,dTheta0,dv_b,dTheta1,dTheta2
-     real(dp) :: a,H_p,ckH_p,dtau
+     real(dp) :: d_delta, d_delta_b, d_v, R
+     real(dp) :: delta, delta_b, v, v_b, Phi
+     real(dp) :: Theta0, Theta1, Theta2, Theta3, Theta4, Theta5, Theta6
+     real(dp) :: Psi, dPhi, dTheta0, dv_b, dTheta1, dTheta2
+     real(dp) :: a,H_p,ckH_p,dt
 
+     ! Save variables for derivation
      delta   = y(1)
      delta_b = y(2)
      v       = y(3)
@@ -310,34 +320,31 @@ contains
      Theta5  = y(11)
      Theta6  = y(12)
 
+     ! Effectivisation variables
      a = exp(x)
      H_p = get_H_p(x)
      ckH_p = ck/H_p
-     dtau = get_dtau(x)
+     dt = get_dtau(x)
 
-
+     ! Derivation
      R         = (4.d0*Omega_r)/(3.d0*Omega_b*a)
-     Psi       = -Phi - 12.d0*(H_0/ck/a)**2.d0*Omega_r*Theta2
-
-     dPhi      = Psi -(ckH_p**2.d0)/3.d0*Phi + H_0**2.d0/(2.d0*H_p**2.d0)*(Omega_m/a*delta+Omega_b/a*delta_b+4.d0*Omega_r*Theta0/a**2.d0)
-
-     dTheta0   = -ckH_p*Theta1 - dPhi
+     Psi       = - Phi - 12.d0*(H_0/ck/a)**2.d0*Omega_r*Theta2
+     dPhi      = Psi - (ckH_p**2.d0)/3.d0*Phi + H_0**2.d0/(2.d0*H_p**2.d0)*(Omega_m/a*delta+Omega_b/a*delta_b+4.d0*Omega_r*Theta0/a**2.d0)
+     dTheta0   = - ckH_p*Theta1 - dPhi
      d_delta   = ckH_p*v   - 3.d0*dPhi
      d_delta_b = ckH_p*v_b - 3.d0*dPhi
-     d_v       = -v -ckH_p*Psi
+     d_v       = - v - ckH_p*Psi
+     dv_b      = - v_b - ckH_p*Psi + dt*R*(3.d0*Theta1+v_b)
+     dTheta1   = ckH_p/3.d0*Theta0 - 2.d0/3.d0*ckH_p*Theta2 + &
+                 ckH_p/3.d0*Psi + dt*(Theta1+v_b/3.d0)
+     dTheta2   = 2.d0/5.d0*ckH_p*Theta1 - 3.d0/5.d0*ckH_p*Theta3+dt*0.9d0*Theta2
 
-     dv_b      = -v_b -ckH_p*Psi +dtau*R*(3.d0*Theta1+v_b)
-     dTheta1   = ckH_p/3.d0*Theta0 -2.d0/3.d0*ckH_p*Theta2 + &
-                 ckH_p/3.d0*Psi +dtau*(Theta1+v_b/3.d0)
-
-     dTheta2   = 2.d0/5.d0*ckH_p*Theta1 - 3.d0/5.d0*ckH_p*Theta3+dtau*0.9d0*Theta2
      do l=3,lmax_int-1
          dydx(6+l) = l/(2.d0*l+1.d0)*ckH_p*y(5+l) - &
-                     (l+1.d0)/(2.d0*l+1.d0)*ckH_p*y(7+l) +dtau*y(6+l)
+                     (l+1.d0)/(2.d0*l+1.d0)*ckH_p*y(7+l) +dt*y(6+l)
      end do
 
-     dydx(6+lmax_int) = ckH_p*y(6+lmax_int-1) -c*(lmax_int+1.d0)/H_p/get_eta(x)*y(6+lmax_int) +dtau*y(6+lmax_int)
-
+     dydx(6+lmax_int) = ckH_p*y(6+lmax_int-1) - c*(lmax_int+1.d0)/H_p/get_eta(x)*y(6+lmax_int) + dt*y(6+lmax_int)
      dydx(1) = d_delta
      dydx(2) = d_delta_b
      dydx(3) = d_v
@@ -349,10 +356,8 @@ contains
 
   end subroutine dy
 
-
-  !       Complete the following routine, such that it returns the time at which
-  !       tight coupling ends. In this project, we define this as either when
-  !       dtau < 10 or c*k/(H_p*dt) > 0.1 or x > x(start of recombination)
+  ! Time at which tight coupling ends.
+  ! dt < 10 or c*k/(H_p*dt) > 0.1 or x > x(start of recombination)
   function get_tight_coupling_time(k)
     implicit none
     integer(i4b)          :: i,n
