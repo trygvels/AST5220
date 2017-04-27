@@ -6,6 +6,8 @@ program cmbspec
   use evolution_mod
   implicit none
   integer(i4b) :: i      ! Number of grid points
+  real :: start, finish
+  call cpu_time(start)
 
   ! Initialize time grids
   call initialize_time_mod
@@ -79,5 +81,7 @@ program cmbspec
   close(124)
 
 
+  call cpu_time(finish)
+  print '("Time = ",f6.3," seconds.")',finish-start
 
 end program cmbspec

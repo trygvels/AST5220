@@ -95,7 +95,7 @@ contains
        v(1,k)       = c*ks(k)/(2.d0*get_H_p(x_init))*Phi(0,k)
        v_b(1,k)     = v(0,k)
        Theta(1,1,k) = -c*ks(k)/(6.d0*get_H_p(x_init))*Phi(0,k)
-       Theta(1,2,k) = -20.d0*c*ks(k)/(45.d0*get_H_p(x_init)*get_dtau(x_init))*Theta(0,1,k)
+       Theta(1,2,k) = -20.d0*c*ks(k)/(45.d0*get_H_p(x_init)*get_dtau(x_init))*Theta(1,1,k)
        do l = 3, lmax_int
           Theta(1,l,k) = -l*c*ks(k)*Theta(1,l-1,k)/((2*l+1)*get_H_p(x_init)*get_dtau(x_init))
        end do
