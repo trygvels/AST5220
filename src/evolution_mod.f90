@@ -4,6 +4,7 @@ module evolution_mod
   use time_mod
   use ode_solver
   use rec_mod
+  use spline_2D_mod
   implicit none
 
   ! Accuracy parameters
@@ -37,21 +38,25 @@ module evolution_mod
   ! Effectivisation variables
   real(dp),     private :: ck, ckH_p, dt, a !dt = dtau
 
+  !Hires source function variables
+  integer(i4b), parameter             :: k_num = 5000
+  integer(i4b), parameter             :: x_num = 5000
 
 contains
 
 
   ! NB!!! New routine for 4th milestone only; disregard until then!!!
-  subroutine get_hires_source_function(k, x, S)
+  subroutine get_hires_source_function(k_hires, x_hires, S)
     implicit none
 
-    real(dp), pointer, dimension(:),   intent(out) :: k, x
+    !real(dp), pointer, dimension(:),   intent(out) :: k_hires, x_hires
+    real(dp), allocatable, dimension(:),   intent(out) :: x_hires, k_hires
     real(dp), pointer, dimension(:,:), intent(out) :: S
 
-    integer(i4b) :: i, j
+    integer(i4b) :: i, k
     real(dp)     :: g, dg, ddg, tau, dt, ddt, H_p, dH_p, ddHH_p, Pi, dPi, ddPi
-    real(dp), allocatable, dimension(:,:) :: S_lores
-
+    real(dp), allocatable, dimension(:,:)     :: S_lores
+    real(dp), allocatable, dimension(:,:,:,:) :: S_coeff
     ! TASK: Output a pre-computed 2D array (over k and x) for the
     !       source function, S(k,x). Remember to set up (and allocate) output
     !       k and x arrays too.
@@ -63,7 +68,60 @@ contains
     !   3) Finally, resample the source function on a high-resolution uniform
     !      5000 x 5000 grid and return this, together with corresponding
     !      high-resolution k and x arrays
+    allocate(x_hires(x_num))
+    allocate(k_hires(k_num))
 
+    do i = 1, x_num
+      do k = 1, k_num
+        x_hires(i) = x_init + (- x_init)*(i-1.d0)/(x_num-1.d0)
+        k_hires(k)= k_min  + (k_max - k_min)*((k-1.d0)/(k_num-1.d0))**2
+      end do
+   end do
+
+   ! k DEFINED AS POINTER; AVOID IN LOOP?
+
+    allocate(S_lores(n_k,n_t))  ! Lores source function
+    allocate(S(k_num,x_num))    ! Hires source function
+    allocate(S_coeff(4,4,n_t,n_k)) !TODO WHAT IS THIS?
+
+    do k=1,n_k
+      ck = c*ks(k)
+      do i=1,n_t
+        g     = get_g(x_t(i))
+        dg    = get_dg(x_t(i))
+        ddg   = get_ddg(x_t(i))
+        tau   = get_tau(x_t(i))
+        dt    = get_dtau(x_t(i))
+        ddt   = get_ddtau(x_t(i))
+        H_p   = get_H_p(x_t(i))
+        dH_p  = get_dH_p(x_t(i))
+        ckH_p = ck/H_p
+        Pi    = Theta(i,2,k)
+        dPi   = dTheta(i,2,k)
+
+        ddPi  = 2.d0*ck/(5.d0*H_p)*(-dH_p/H_p*Theta(i,1,k) + dTheta(i,1,k)) &
+                +0.3d0*(ddt*Pi+dt*dPi) &
+                -3.d0*ck/(5.d0*H_p)*(-dH_p/H_p*Theta(i,3,k) + dTheta(i,3,k))
+
+        ! Source function with low resolution (Note preduct rule on derivatives)
+        S_lores(i,k) = g*(Theta(i,0,k) + Psi(i,k) + .25d0*Pi) &
+                       + exp(-tau)*(dPsi(i,k) - dPhi(i,k)) &
+                       - 1.d0/ckH_p*((g*dv_b(i,k) + v_b(i,k)*dg) + g*v_b(i,k)*dH_p) &
+                       + .75d0/ck**2*((H_0**2/2.d0*((Omega_m+Omega_b)/exp(x_t(i)) &
+                       + 4.d0*Omega_r/exp(2.d0*x_t(i)) + 4.d0*Omega_lambda*exp(2.d0*x_t(i))))*&
+                       g*Pi + 3.d0*H_p*dH_p*(dg*Pi+g*dPi) + H_p**2* &
+                       (ddg*Pi + 2.d0*dg*dPi+g*ddPi))
+      end do
+    end do
+    !Spline results
+    call splie2_full_precomp(x_t,ks,S_lores,S_coeff)
+
+    ! Make hires Source function 5kx5k grid
+    do k=1, k_num
+        do i=1, x_num
+            S(i,k) = splin2_full_precomp(x_t, ks, S_coeff, x_hires(i), k_hires(k))
+        end do
+    end do
   end subroutine get_hires_source_function
 
   !######### MILESTONE 3 #########

@@ -14,7 +14,7 @@ module rec_mod
   real(dp), allocatable, dimension(:) :: n_e, n_e2         ! Splined (log of) electron density, n_e
   real(dp), allocatable, dimension(:) :: g, g2, g22        ! Visibility: g, g'',(g'')''
   real(dp), allocatable, dimension(:) :: dg                ! First derivative of g: g'
-
+  real(dp)                            :: yp1, ypn, eps, hmin
 contains
 
   subroutine initialize_rec_mod
@@ -22,7 +22,7 @@ contains
 
     integer(i4b) :: i, j, k
     real(dp)     :: saha_limit, y, T_b, n_b, dydx, xmin, xmax, dx
-    real(dp)     :: f, n_e0, X_e0, xstart, xstop, yp1, ypn, eps, hmin, step
+    real(dp)     :: f, n_e0, X_e0, xstart, xstop, step
     real(dp)     :: C_r
 
     logical(lgt) :: use_saha
