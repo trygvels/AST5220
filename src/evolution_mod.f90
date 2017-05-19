@@ -51,7 +51,7 @@ contains
 
     !real(dp), pointer, dimension(:),   intent(out) :: k_hires, x_hires
     real(dp), allocatable, dimension(:),   intent(out) :: x_hires, k_hires
-    real(dp), pointer, dimension(:,:), intent(out) :: S
+    real(dp), allocatable, dimension(:,:), intent(out) :: S
 
     integer(i4b) :: i, k
     real(dp)     :: g, dg, ddg, tau, dt, ddt, H_p, dH_p, ddHH_p, Pi, dPi, ddPi
@@ -71,12 +71,13 @@ contains
     allocate(x_hires(x_num))
     allocate(k_hires(k_num))
 
+    ! Generate hires grid for x and k
     do i = 1, x_num
       do k = 1, k_num
-        x_hires(i) = x_init + (- x_init)*(i-1.d0)/(x_num-1.d0)
+        x_hires(i) = x_init - x_init*(i-1.d0)/(x_num-1.d0)
         k_hires(k)= k_min  + (k_max - k_min)*((k-1.d0)/(k_num-1.d0))**2
       end do
-   end do
+    end do
 
    ! k DEFINED AS POINTER; AVOID IN LOOP?
 
@@ -113,6 +114,7 @@ contains
                        (ddg*Pi + 2.d0*dg*dPi+g*ddPi))
       end do
     end do
+
     !Spline results
     call splie2_full_precomp(x_t,ks,S_lores,S_coeff)
 

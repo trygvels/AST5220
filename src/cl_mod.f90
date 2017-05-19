@@ -5,7 +5,7 @@ module cl_mod
   implicit none
   real(dp),     pointer,     dimension(:,:)     :: j_l, j_l2
   real(dp),     allocatable, dimension(:)       :: z_spline, j_l_spline, j_l_spline2
-  real(dp),     allocatable, dimension(:)       :: x_hires, k_hires
+  real(dp),     allocatable, dimension(:)       :: x_hires, k_hires,  l_hires, cl_hires
 
 contains
 
@@ -16,14 +16,14 @@ contains
     integer(i4b) :: i, j, k, l, l_num, x_num, n_spline, k_num
     real(dp)     :: dx, S_func, j_func, z, eta, eta0, x0, x_min, x_max, d, e
     integer(i4b), allocatable, dimension(:)       :: ls
-    real(dp),     allocatable, dimension(:)       :: integrand
-    real(dp),     pointer,     dimension(:)       :: x_arg, int_arg, cls, cls2, ls_dp
-    real(dp),     pointer,     dimension(:)       :: x !,k
-    real(dp),     pointer,     dimension(:,:,:,:) :: S_coeff
-    real(dp),     pointer,     dimension(:,:)     :: S, S2
+    real(dp),     allocatable, dimension(:)       :: integrandx, integrandk
+    real(dp),     allocatable,     dimension(:)       :: x_arg, int_arg, cls, cls2, ls_dp
+    real(dp),     allocatable,     dimension(:)       :: x !,k
+    real(dp),     allocatable,     dimension(:,:,:,:) :: S_coeff
+    real(dp),     allocatable,     dimension(:,:)     :: S, S2
     real(dp),     allocatable, dimension(:,:)     :: Theta
-
-    real(dp)           :: t1, t2, integral
+    real :: start, finish
+    real(dp)           :: integralx, integralk, h1, h2
     logical(lgt)       :: exist
     character(len=128) :: filename
     real(dp), allocatable, dimension(:) :: y, y2
@@ -47,7 +47,7 @@ contains
     allocate(k_hires(k_num))
 
     ! Calculate Hires source function from evolution_mod
-    call get_hires_source_function(k_hires,x_hires,S) !These are pointers, work this out.
+    call get_hires_source_function(k_hires,x_hires,S) ! S is pointer, LEARN
 
     ! Task: Initialize spherical Bessel functions for each l; use 5400 sampled points between
     !       z = 0 and 3500. Each function must be properly splined
@@ -59,7 +59,9 @@ contains
     allocate(j_l(n_spline, l_num))
     allocate(j_l2(n_spline, l_num))
 
-    ! Calculate bessel functions
+    ! Timing bessel functions calculation
+    call cpu_time(start)
+    ! Calculate bessel functions, needed for LOS integration
     do i = 1, n_spline
       z_spline(i) = (i-1)*3500d0/(n_spline-1)
 
@@ -70,52 +72,76 @@ contains
       endif
     end do
 
-    !Spline bessel functions TODO Should we use 2D spline?
+    open (unit=2, file="bessels.dat", action="write", status="replace")
+
+    !Spline bessel functions
     do l=1,l_num
           call spline(z_spline, j_l(:,l), yp1, ypn, j_l2(:,l))
     end do
 
 
-    allocate(Theta(k_num,x_num))
+    allocate(Theta(l_num,k_num))
+    allocate(integrandx(x_num))
+    allocate(integrandk(k_num))
+    allocate(cls(l_num))
+    allocate(cls2(l_num))
+
+
     ! Overall task: Compute the C_l's for each given l
+    h1 = (x_hires(x_num) - x_hires(1))/x_num
+    h2 = (k_hires(k_num) - k_hires(1))/k_num
     do l = 1, l_num
 
-    !   ! Task: Compute the transfer function, Theta_l(k)
-    !   do k=1, k_num
-!
-    !     do i=1, x_num
-    !       integrand(i) = S(i,k)*j_lfunc(l,k_hires(k),x_hires(i))
-    !     end do
-!
-    !     Theta_l(l,k) = 0.5d0*(integrand(1)+integrand(x_num))
+       ! ##### UNIFORM TRAPEZOIDAL INTEGRATION #####
+       ! Integrating both functions in same loop!
 
-    !     do i = 2, x_num - 1
-    !       Theta_l(l,k) = Theta_l(l,k) + integrand(i)
-    !     end do
-!
-    !     Theta_l(l,k) = h1*Theta_l(l,k)
-    !   end do
-    !   ! Task: Integrate P(k) * (Theta_l^2 / k) over k to find un-normalized C_l's
-!
-    !   do k = 1, k_num
-    !     integrand(l,k) = (c*k_hires(k)/H_0)**(n_s-1)*Theta_l(l,k)**2/k_hires(k)
-    !   end do
+       integralk = 0 ! Reset integral for each value of cls
+       do k = 1, k_num
+         integralx = 0 ! Reset integral for each value of theta
 
-    !   ! Task: Store C_l in an array. Optionally output to file
-    !   C_lint = 0.5d0*(integrand2(l,1)+integrand2(l,n_k_highres))
-    !   do k=2,n_k_highres-1
-               !write(*,*) 'k=',k
-    !           C_lint = C_lint + integrand2(l,k)
-    !   end do
+         ! Integrate theta
+         do i = 1, x_num
+           ! This takes forever (j_lfunc)
+           ! Save these values?
 
-       !Store C_l in an array.
-    !   cls(l) = h2*C_lint *ls(l)*(ls(l)+1.d0)/(2.d0*pi)
+           !Writing bessel functions to file
+           write(2,'(*(2X, ES14.6E3))') j_lfunc(k_hires(k,x_hires(i)))
+
+           integrandx(i) = S(i,k)*j_lfunc(l,k_hires(k),x_hires(i))
+           integralx = integralx + integrandx(i)
+         end do
+         ! Subtract half of first and last integrand for x
+         Theta(l,k) = h1*(integralx - 0.5d0*(integrandx(1)+integrandx(x_num)))
+
+         ! Integrate C_l
+         integrandk(k) = (c*k_hires(k)/H_0)**(n_s-1)*Theta(l,k)**2/k_hires(k)
+         integralk = integralk + integrandk(k)
+       end do
+       ! Subtract half of first and last integrand for k
+       integralk = h2*(integralk - 0.5d0*(integrandk(1)+integrandk(k_num)))
+
+       ! Store C_l in an array. Optionally output to file
+       cls(l) = integralk*ls(l)*(ls(l)+1.d0)/(2.d0*pi)
+       if (l==5) then
+         call cpu_time(finish)
+         print '("Time for 5 l = ",f6.3," seconds.")',finish-start
+       end if
+    end do
+    close (2) !TODO Remove after saved js
+
+    write(*,*) 'converting ls to double precision'
+    allocate(ls_dp(l_num))
+    do l=1,l_num
+        ls_dp(l) = ls(l)
     end do
 
-
     ! Task: Spline C_l's found above, and output smooth C_l curve for each integer l
-    !call spline(ls, cls, yp1, ypn, cls2)
-
+    allocate(cl_hires(int(maxval(ls))))
+    allocate(l_hires(int(maxval(ls))))
+    call spline(ls_dp, cls, yp1, ypn, cls2)
+    do l = 1, int(maxval(ls))
+      cl_hires(l) =  splint(ls_dp, cls, cls2, l_hires(l))
+    end do
   end subroutine compute_cls
 
   function j_lfunc(l,k,x)
@@ -123,7 +149,8 @@ contains
     integer(i4b), intent(in) :: l
     real(dp), intent(in)     :: x, k
     real(dp)                 :: j_lfunc
-
+    ! Spline integration for j_l bessel functions
+    ! TODO: Should this k be ks(k)?
     j_lfunc = splint(z_spline, j_l(:,l), j_l2(:,l), k*(get_eta(0.d0)-get_eta(x)))
   end function j_lfunc
 

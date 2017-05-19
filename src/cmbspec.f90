@@ -81,7 +81,18 @@ program cmbspec
   !close(123)
   !close(124)
   call compute_cls
+
+
+
+  !write cls and ls to file
+  open (unit=1, file="C_l.dat", action="write", status="replace")
+  do i=1,1200
+      write (1,'(*(2X, ES14.6E3))') l_hires(i),cl_hires(i)
+  end do
+  close (1)
+
+
   call cpu_time(finish)
-  print '("Time = ",f6.3," seconds.")',finish-start
+  print '("Time = ",f7.2," seconds.")',finish-start
 
 end program cmbspec
