@@ -64,11 +64,11 @@ contains
     do i = 1, n_spline
       z_spline(i) = (i-1)*3400d0/(n_spline-1)
       ! TODO: WHAT IS HAPPENING HERE
-      if (z_spline(i)>2.d0) then
-        do l=1, l_num
+      do l=1, l_num
+        if (z_spline(i)>2.d0) then
           call sphbes(ls(l),z_spline(i),j_l(i,l))
-        end do
-      endif
+        endif
+      end do
     end do
 
 
