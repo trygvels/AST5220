@@ -48,7 +48,7 @@ contains
 
     ! Calculate Hires source function from evolution_mod
     write(*,*) "Calculating hires S, x and k"
-    call get_hires_source_function(k_hires,x_hires,S) ! S is pointer, LEARN
+    call get_hires_source_function(x_hires,k_hires,S) ! S is pointer, LEARN
 
     ! Task: Initialize spherical Bessel functions for each l; use 5400 sampled points between
     !       z = 0 and 3500. Each function must be properly splined
@@ -72,8 +72,12 @@ contains
     end do
 
 
-    open (unit=2, file="thetalk.dat", action="write", status="replace")
-
+    open(unit=123, file="integrand1.dat", action="write", status="replace")
+    open(unit=124, file="integrand2.dat", action="write", status="replace")
+    open(unit=125, file="integrand3.dat", action="write", status="replace")
+    open(unit=126, file="integrand4.dat", action="write", status="replace")
+    open(unit=127, file="integrand5.dat", action="write", status="replace")
+    open(unit=128, file="integrand6.dat", action="write", status="replace")
     !Spline bessel functions, get second derivative for later splint
     do l=1,l_num
           call spline(z_spline, j_l(:,l), yp1, ypn, j_l2(:,l))
@@ -119,12 +123,61 @@ contains
        ! Store C_l in an array. Optionally output to file
        cls(l) = integralk*ls(l)*(ls(l)+1.d0)/(2.d0*pi)
 
-       if (l==5) then
-         call cpu_time(finish)
-         write(*,*) '("Time for 5 l = ",f6.3," seconds.")',finish-start
+
+
+
+
+       !write the integrand in cl integral to file
+       if(ls(l)==2) then
+           do k=1,k_num
+               write (123,'(*(2X, ES14.6E3))') c*k_hires(k)/H_0 , ls(l)*(ls(l)+1.d0)*&
+                     Theta(l,k)**2/(c*k_hires(k)/H_0)
+           end do
+       end if
+       if(ls(l)==50) then
+           do k=1,k_num
+               write (124,'(*(2X, ES14.6E3))') ls(l)*(ls(l)+1.d0)*Theta(l,k)**2 &
+                     /(c*k_hires(k)/H_0)
+           end do
+       end if
+       if(ls(l)==200) then
+           do k=1,k_num
+               write (125,'(*(2X, ES14.6E3))') ls(l)*(ls(l)+1.d0)*Theta(l,k)**2 &
+                     /(c*k_hires(k)/H_0)
+           end do
+       end if
+       if(ls(l)==500) then
+           do k=1,k_num
+               write (126,'(*(2X, ES14.6E3))') ls(l)*(ls(l)+1.d0)*Theta(l,k)**2 &
+                     /(c*k_hires(k)/H_0)
+           end do
+       end if
+       if(ls(l)==800) then
+           do k=1,k_num
+               write (127,'(*(2X, ES14.6E3))') ls(l)*(ls(l)+1.d0)*Theta(l,k)**2 &
+                     /(c*k_hires(k)/H_0)
+           end do
+       end if
+       if(ls(l)==1200) then
+           do k=1,k_num
+               write (128,'(*(2X, ES14.6E3))') ls(l)*(ls(l)+1.d0)*Theta(l,k)**2 &
+                     /(c*k_hires(k)/H_0)
+           end do
        end if
 
+
+      call cpu_time(finish)
+      print "l = ", l
+      print '("Time = ",f7.2," seconds.")',finish-start
     end do
+
+    close(123)
+    close(124)
+    close(125)
+    close(126)
+    close(127)
+    close(128)
+
     !close (2) !TODO Remove after saved js
 
     write(*,*) 'converting ls to double precision'

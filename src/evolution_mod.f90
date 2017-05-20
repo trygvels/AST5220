@@ -46,7 +46,7 @@ contains
 
 
   ! NB!!! New routine for 4th milestone only; disregard until then!!!
-  subroutine get_hires_source_function(k_hires, x_hires, S)
+  subroutine get_hires_source_function(x_hires, k_hires, S)
     implicit none
 
     !real(dp), pointer, dimension(:),   intent(out) :: k_hires, x_hires
@@ -81,8 +81,8 @@ contains
 
    ! k DEFINED AS POINTER; AVOID IN LOOP?
 
-    allocate(S_lores(n_k,n_t))  ! Lores source function
-    allocate(S(k_num,x_num))    ! Hires source function
+    allocate(S_lores(n_t,n_k))  ! Lores source function
+    allocate(S(x_num,k_num))    ! Hires source function
     allocate(S_coeff(4,4,n_t,n_k)) !TODO WHAT IS THIS?
 
     do k=1,n_k
