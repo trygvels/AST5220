@@ -47,6 +47,7 @@ contains
     allocate(k_hires(k_num))
 
     ! Calculate Hires source function from evolution_mod
+    write(*,*) "Calculating hires S, x and k"
     call get_hires_source_function(k_hires,x_hires,S) ! S is pointer, LEARN
 
     ! Task: Initialize spherical Bessel functions for each l; use 5400 sampled points between
@@ -59,12 +60,10 @@ contains
     allocate(j_l(n_spline, l_num))
     allocate(j_l2(n_spline, l_num))
 
-    ! Timing bessel functions calculation
-    call cpu_time(start)
     ! Calculate bessel functions, needed for LOS integration
     do i = 1, n_spline
       z_spline(i) = (i-1)*3500d0/(n_spline-1)
-
+      ! TODO: WHAT IS HAPPENING HERE
       if (z_spline(i)>2.d0) then
         do l=1, l_num
           call sphbes(ls(l),z_spline(i),j_l(i,l))
@@ -72,7 +71,8 @@ contains
       endif
     end do
 
-    !open (unit=2, file="bessels.dat", action="write", status="replace")
+
+    open (unit=2, file="thetalk.dat", action="write", status="replace")
 
     !Spline bessel functions
     do l=1,l_num
@@ -87,7 +87,8 @@ contains
     allocate(cls2(l_num))
 
 
-    ! Overall task: Compute the C_l's for each given l
+    ! #### C_l COMPUTATION OVER l's ####
+    ! Constants for trapezoidal integration
     h1 = (x_hires(x_num) - x_hires(1))/x_num
     h2 = (k_hires(k_num) - k_hires(1))/k_num
     do l = 1, l_num
@@ -101,16 +102,12 @@ contains
 
          ! Integrate theta
          do i = 1, x_num
-           ! This takes forever (j_lfunc)
-           ! Save these values?
-           !Writing bessel functions to file, do once
-           !write(2,'(*(2X, ES14.6E3))') j_lfunc(l,k_hires(k),x_hires(i))
-
            integrandx(i) = S(i,k)*j_lfunc(l,k_hires(k),x_hires(i))
            integralx = integralx + integrandx(i)
          end do
          ! Subtract half of first and last integrand for x
          Theta(l,k) = h1*(integralx - 0.5d0*(integrandx(1)+integrandx(x_num)))
+
 
          ! Integrate C_l
          integrandk(k) = (c*k_hires(k)/H_0)**(n_s-1)*Theta(l,k)**2/k_hires(k)
@@ -138,10 +135,13 @@ contains
     ! Task: Spline C_l's found above, and output smooth C_l curve for each integer l
     allocate(cl_hires(int(maxval(ls))))
     allocate(l_hires(int(maxval(ls))))
+
+    ! Spline cl, get second derivative for splint
     call spline(ls_dp, cls, yp1, ypn, cls2)
+
     do l = 1, int(maxval(ls))
       l_hires(l) = l
-      cl_hires(l) =  splint(ls_dp, cls, cls2, l_hires(l))
+      cl_hires(l) =  splint(ls_dp, cls(l), cls2(l), l_hires(l))
     end do
   end subroutine compute_cls
 
