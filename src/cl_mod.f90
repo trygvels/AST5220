@@ -62,7 +62,7 @@ contains
 
     ! Calculate bessel functions, needed for LOS integration
     do i = 1, n_spline
-      z_spline(i) = (i-1)*3500d0/(n_spline-1)
+      z_spline(i) = (i-1)*3400d0/(n_spline-1)
       ! TODO: WHAT IS HAPPENING HERE
       if (z_spline(i)>2.d0) then
         do l=1, l_num
@@ -167,7 +167,7 @@ contains
 
 
       call cpu_time(finish)
-      print "l = ", l
+      write(*,*) "l = ", l
       print '("Time = ",f7.2," seconds.")',finish-start
     end do
 
@@ -178,7 +178,6 @@ contains
     close(127)
     close(128)
 
-    !close (2) !TODO Remove after saved js
 
     write(*,*) 'converting ls to double precision'
     allocate(ls_dp(l_num))
