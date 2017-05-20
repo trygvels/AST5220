@@ -74,7 +74,7 @@ contains
 
     open (unit=2, file="thetalk.dat", action="write", status="replace")
 
-    !Spline bessel functions
+    !Spline bessel functions, get second derivative for later splint
     do l=1,l_num
           call spline(z_spline, j_l(:,l), yp1, ypn, j_l2(:,l))
     end do
@@ -121,8 +121,9 @@ contains
 
        if (l==5) then
          call cpu_time(finish)
-         print '("Time for 5 l = ",f6.3," seconds.")',finish-start
+         write(*,*) '("Time for 5 l = ",f6.3," seconds.")',finish-start
        end if
+
     end do
     !close (2) !TODO Remove after saved js
 
@@ -141,7 +142,7 @@ contains
 
     do l = 1, int(maxval(ls))
       l_hires(l) = l
-      cl_hires(l) =  splint(ls_dp, cls(l), cls2(l), l_hires(l))
+      cl_hires(l) =  splint(ls_dp, cls, cls2, l_hires(l))
     end do
   end subroutine compute_cls
 
