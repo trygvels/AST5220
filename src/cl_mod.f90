@@ -72,7 +72,7 @@ contains
       endif
     end do
 
-    open (unit=2, file="bessels.dat", action="write", status="replace")
+    !open (unit=2, file="bessels.dat", action="write", status="replace")
 
     !Spline bessel functions
     do l=1,l_num
@@ -103,9 +103,8 @@ contains
          do i = 1, x_num
            ! This takes forever (j_lfunc)
            ! Save these values?
-
-           !Writing bessel functions to file
-           write(2,'(*(2X, ES14.6E3))') j_lfunc(k_hires(k,x_hires(i)))
+           !Writing bessel functions to file, do once
+           !write(2,'(*(2X, ES14.6E3))') j_lfunc(l,k_hires(k),x_hires(i))
 
            integrandx(i) = S(i,k)*j_lfunc(l,k_hires(k),x_hires(i))
            integralx = integralx + integrandx(i)
@@ -122,12 +121,13 @@ contains
 
        ! Store C_l in an array. Optionally output to file
        cls(l) = integralk*ls(l)*(ls(l)+1.d0)/(2.d0*pi)
+
        if (l==5) then
          call cpu_time(finish)
          print '("Time for 5 l = ",f6.3," seconds.")',finish-start
        end if
     end do
-    close (2) !TODO Remove after saved js
+    !close (2) !TODO Remove after saved js
 
     write(*,*) 'converting ls to double precision'
     allocate(ls_dp(l_num))
@@ -140,6 +140,7 @@ contains
     allocate(l_hires(int(maxval(ls))))
     call spline(ls_dp, cls, yp1, ypn, cls2)
     do l = 1, int(maxval(ls))
+      l_hires(l) = l
       cl_hires(l) =  splint(ls_dp, cls, cls2, l_hires(l))
     end do
   end subroutine compute_cls
