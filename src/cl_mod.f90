@@ -49,7 +49,6 @@ contains
     ! Calculate Hires source function from evolution_mod
     write(*,*) "Calculating hires S, x and k"
     call get_hires_source_function(x_hires,k_hires,S) ! S is pointer, LEARN
-
     ! Task: Initialize spherical Bessel functions for each l; use 5400 sampled points between
     !       z = 0 and 3500. Each function must be properly splined
     ! Hint: It may be useful for speed to store the splined objects on disk in an unformatted
@@ -117,6 +116,7 @@ contains
          integrandk(k) = (c*k_hires(k)/H_0)**(n_s-1)*Theta(l,k)**2/k_hires(k)
          integralk = integralk + integrandk(k)
        end do
+
        ! Subtract half of first and last integrand for k
        integralk = h2*(integralk - 0.5d0*(integrandk(1)+integrandk(k_num)))
 
@@ -192,8 +192,9 @@ contains
     ! Spline cl, get second derivative for splint
     call spline(ls_dp, cls, yp1, ypn, cls2)
 
+    !Spline to get cl at 1200 l's
     do l = 1, int(maxval(ls))
-      l_hires(l) = l
+      l_hires(l) = l ! dp hires l
       cl_hires(l) =  splint(ls_dp, cls, cls2, l_hires(l))
     end do
   end subroutine compute_cls

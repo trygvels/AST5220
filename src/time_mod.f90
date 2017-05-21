@@ -22,9 +22,9 @@ subroutine initialize_time_mod
   real(dp)     :: z_start_rec, z_end_rec, z_0, x_start_rec, x_end_rec, x_0, dx, x_eta1, x_eta2, eta_init, a_init, step, eps, stepmin, yp1,ypn, rho_cc, rho_m, rho_b, rho_r, rho_lambda, z,x_init
 
   ! Define two epochs, 1) during and 2) after recombination.
-  n1          = 200                       ! Grid points before rec
-  n2          = 300                       ! Number of grid points during recombination!
-  n3          = 200                       ! Number of grid points after recombination
+  n1          = 300                       ! Grid points before rec
+  n2          = 200                       ! Number of grid points during recombination!
+  n3          = 300                       ! Number of grid points after recombination
   n_t         = n1 + n2 + n3                  ! Total number of grid points
   z_start_rec = 1630.4d0                  ! Redshift of start of recombination
   z_end_rec   = 614.2d0                   ! Redshift of end of recombination
@@ -62,7 +62,7 @@ subroutine initialize_time_mod
      x_t(n1+n2+i) = x_end_rec + i*(x_0-x_end_rec)/(n3)
   end do
 
-  a_t = exp(x_t) 
+  a_t = exp(x_t)
 
   ! Task: 1) Compute the conformal time at each eta time step
   !       2) Spline the resulting function, using the provided "spline" routine in spline_1D_mod.f90
