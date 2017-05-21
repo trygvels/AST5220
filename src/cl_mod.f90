@@ -3,7 +3,7 @@ module cl_mod
   use evolution_mod
   use sphbess_mod
   implicit none
-  real(dp),     pointer,     dimension(:,:)     :: j_l, j_l2
+  real(dp),     allocatable, dimension(:,:)     :: j_l, j_l2
   real(dp),     allocatable, dimension(:)       :: z_spline, j_l_spline, j_l_spline2
   real(dp),     allocatable, dimension(:)       :: x_hires, k_hires,  l_hires, cl_hires
 
@@ -13,20 +13,16 @@ contains
   subroutine compute_cls
     implicit none
 
-    integer(i4b) :: i, j, k, l, l_num, x_num, n_spline, k_num
+    integer(i4b) :: i, k, l, x_num, l_num, k_num,  n_spline
     real(dp)     :: dx, S_func, j_func, z, eta, eta0, x0, x_min, x_max, d, e
-    integer(i4b), allocatable, dimension(:)       :: ls
-    real(dp),     allocatable, dimension(:)       :: integrandx, integrandk
-    real(dp),     allocatable,     dimension(:)       :: x_arg, int_arg, cls, cls2, ls_dp
-    real(dp),     allocatable,     dimension(:)       :: x !,k
+    integer(i4b), allocatable,     dimension(:)       :: ls
+    real(dp),     allocatable,     dimension(:)       :: integrandx, integrandk
+    real(dp),     allocatable,     dimension(:)       :: cls, cls2, ls_dp
     real(dp),     allocatable,     dimension(:,:,:,:) :: S_coeff
     real(dp),     allocatable,     dimension(:,:)     :: S, S2
-    real(dp),     allocatable, dimension(:,:)     :: Theta
+    real(dp),     allocatable,     dimension(:,:)     :: Theta
     real :: start, finish
-    real(dp)           :: integralx, integralk, h1, h2
-    logical(lgt)       :: exist
-    character(len=128) :: filename
-    real(dp), allocatable, dimension(:) :: y, y2
+    real(dp) :: integralx, integralk, h1, h2
 
     ! Set up which l's to compute
     l_num = 44
@@ -39,30 +35,22 @@ contains
     x_num = 5000
     k_num = 5000
 
-    ! Task: Get source function from evolution_mod
-
     ! Allocate Source function and Hires grids
     allocate(S(x_num,k_num))
     allocate(x_hires(x_num))
     allocate(k_hires(k_num))
 
     ! Calculate Hires source function from evolution_mod
-    write(*,*) "Calculating hires S, x and k"
-    call get_hires_source_function(x_hires,k_hires,S) ! S is pointer, LEARN
-    ! Task: Initialize spherical Bessel functions for each l; use 5400 sampled points between
-    !       z = 0 and 3500. Each function must be properly splined
-    ! Hint: It may be useful for speed to store the splined objects on disk in an unformatted
-    !       Fortran (= binary) file, so that these only has to be computed once. Then, if your
-    !       cache file exists, read from that; if not, generate the j_l's on the fly.
+    call get_hires_source_function(x_hires,k_hires,S)
+
     n_spline = 5400
-    allocate(z_spline(n_spline))    ! Note: z is *not* redshift, but simply the dummy argument of j_l(z)
+    allocate(z_spline(n_spline))    !j_l(z), not redshift
     allocate(j_l(n_spline, l_num))
     allocate(j_l2(n_spline, l_num))
 
-    ! Calculate bessel functions, needed for LOS integration
+    ! Calculate bessel functions, with 5400 sampled points between z = 0 to 3500
     do i = 1, n_spline
       z_spline(i) = (i-1)*3400.d0/(n_spline-1.d0)
-      ! TODO: WHAT IS HAPPENING HERE
       do l=1, l_num
         if (z_spline(i)>2.d0) then
           call sphbes(ls(l),z_spline(i),j_l(i,l))
@@ -70,13 +58,14 @@ contains
       end do
     end do
 
-
+    ! Open files to write transfer functions
     open(unit=123, file="integrand1.dat", action="write", status="replace")
     open(unit=124, file="integrand2.dat", action="write", status="replace")
     open(unit=125, file="integrand3.dat", action="write", status="replace")
     open(unit=126, file="integrand4.dat", action="write", status="replace")
     open(unit=127, file="integrand5.dat", action="write", status="replace")
     open(unit=128, file="integrand6.dat", action="write", status="replace")
+
     !Spline bessel functions, get second derivative for later splint
     do l=1,l_num
           call spline(z_spline, j_l(:,l), yp1, ypn, j_l2(:,l))
@@ -91,9 +80,11 @@ contains
 
 
     ! #### C_l COMPUTATION OVER l's ####
+
     ! Constants for trapezoidal integration
     h1 = (x_hires(x_num) - x_hires(1))/x_num
     h2 = (k_hires(k_num) - k_hires(1))/k_num
+
     do l = 1, l_num
 
        ! ##### UNIFORM TRAPEZOIDAL INTEGRATION #####
@@ -176,8 +167,7 @@ contains
     close(127)
     close(128)
 
-
-    write(*,*) 'converting ls to double precision'
+    ! Convert ls to double precision
     allocate(ls_dp(l_num))
     do l=1,l_num
         ls_dp(l) = ls(l)

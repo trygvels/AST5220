@@ -45,11 +45,9 @@ module evolution_mod
 contains
 
 
-  ! NB!!! New routine for 4th milestone only; disregard until then!!!
   subroutine get_hires_source_function(x_hires, k_hires, S)
     implicit none
 
-    !real(dp), pointer, dimension(:),   intent(out) :: k_hires, x_hires
     real(dp), allocatable, dimension(:),   intent(out) :: x_hires, k_hires
     real(dp), allocatable, dimension(:,:), intent(out) :: S
 
@@ -57,33 +55,23 @@ contains
     real(dp)     :: g, dg, ddg, tau, dt, ddt, H_p, dH_p, ddHH_p, Pi, dPi, ddPi
     real(dp), allocatable, dimension(:,:)     :: S_lores
     real(dp), allocatable, dimension(:,:,:,:) :: S_coeff
-    ! TASK: Output a pre-computed 2D array (over k and x) for the
-    !       source function, S(k,x). Remember to set up (and allocate) output
-    !       k and x arrays too.
-    !
-    ! Substeps:
-    !   1) First compute the source function over the existing k and x
-    !      grids
-    !   2) Then spline this function with a 2D spline
-    !   3) Finally, resample the source function on a high-resolution uniform
-    !      5000 x 5000 grid and return this, together with corresponding
-    !      high-resolution k and x arrays
+
+    ! Output a pre-computed 2D array (over k and x) for the source function, S(k,x).
     allocate(x_hires(x_num))
     allocate(k_hires(k_num))
 
     ! Generate hires grid for x and k
     do i = 1, x_num
-      do k = 1, k_num
-        x_hires(i) = x_init - x_init*(i-1.d0)/(x_num-1.d0)
-        k_hires(k)= k_min  + (k_max - k_min)*((k-1.d0)/(k_num-1.d0))**2
-      end do
+      x_hires(i) = x_init - x_init*(i-1.d0)/(x_num-1.d0)
     end do
 
-   ! k DEFINED AS POINTER; AVOID IN LOOP?
+    do k = 1, k_num
+        k_hires(k)= k_min  + (k_max - k_min)*((k-1.d0)/(k_num-1.d0))**2
+    end do
 
     allocate(S_lores(n_t,n_k))  ! Lores source function
     allocate(S(x_num,k_num))    ! Hires source function
-    allocate(S_coeff(4,4,n_t,n_k)) !TODO WHAT IS THIS?
+    allocate(S_coeff(4,4,n_t,n_k))
 
     do k=1,n_k
       ck = c*ks(k)
@@ -96,10 +84,8 @@ contains
         ddt   = get_ddtau(x_t(i))
         H_p   = get_H_p(x_t(i))
         dH_p  = get_dH_p(x_t(i))
-        ckH_p = ck/H_p
         Pi    = Theta(i,2,k)
         dPi   = dTheta(i,2,k)
-
 
         ! Source function with low resolution (Note preduct rule on derivatives)
         ddPi  = 2.d0*ck/(5.d0*H_p)*(-dH_p/H_p*Theta(i,1,k) + dTheta(i,1,k)) &
