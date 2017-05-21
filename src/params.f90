@@ -10,8 +10,8 @@ module params
   real(dp), parameter :: Mpc = 3.08568025d22
 
   ! Cosmological parameters
-  real(dp), parameter :: Omega_b      = 0.050d0
-  real(dp), parameter :: Omega_m      = 0.224d0
+  real(dp), parameter :: Omega_b      = 0.046d0
+  real(dp), parameter :: Omega_m      = 0.200d0
   real(dp), parameter :: Omega_r      = 8.3d-5
   real(dp), parameter :: Omega_nu     = 0.d0
   ! If you want neutrinos, use the two below
