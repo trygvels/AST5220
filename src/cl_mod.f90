@@ -60,28 +60,14 @@ contains
     allocate(j_l2(n_spline, l_num))
 
     ! Calculate bessel functions, needed for LOS integration
-    !do i = 1, n_spline
-    !  z_spline(i) = (i-1)*3400.d0/(n_spline-1.d0)
-    !  ! TODO: WHAT IS HAPPENING HERE
-    !  do l=1, l_num
-    !    if (z_spline(i)>2.d0) then
-    !      call sphbes(ls(l),z_spline(i),j_l(i,l))
-    !    endif
-    !  end do
-    !end do
-
-    do i=1,n_spline
-        z_spline(i) = 0.d0 + (i-1)*(3400.d0-0.d0)/(n_spline-1.d0)
-    end do
-
-    !Calculate spherical bessel functions for select ls
-    write(*,*) 'Compute spherical Bessel functions'
-    do i =1,n_spline
-        do l=1,l_num
-            if(z_spline(i) > 2.d0) then
-                call sphbes(ls(l),z_spline(i), j_l(i,l))
-            endif
-        end do
+    do i = 1, n_spline
+      z_spline(i) = (i-1)*3400.d0/(n_spline-1.d0)
+      ! TODO: WHAT IS HAPPENING HERE
+      do l=1, l_num
+        if (z_spline(i)>2.d0) then
+          call sphbes(ls(l),z_spline(i),j_l(i,l))
+        endif
+      end do
     end do
 
 
@@ -127,7 +113,7 @@ contains
 
 
          ! Integrate C_l
-         integrandk(k) = (c*k_hires(k)/H_0)**(n_s-1)*Theta(l,k)**2/k_hires(k)
+         integrandk(k) = (c*k_hires(k)/H_0)**(n_s-1.d0)*Theta(l,k)**2/k_hires(k)
          integralk = integralk + integrandk(k)
        end do
 
@@ -217,7 +203,6 @@ contains
     real(dp), intent(in)     :: x, k
     real(dp)                 :: j_lfunc
     ! Spline integration for j_l bessel functions
-    ! TODO: Should this k be ks(k)?
     j_lfunc = splint(z_spline, j_l(:,l), j_l2(:,l), k*(get_eta(0.d0)-get_eta(x)))
   end function j_lfunc
 

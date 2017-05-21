@@ -100,18 +100,19 @@ contains
         Pi    = Theta(i,2,k)
         dPi   = dTheta(i,2,k)
 
+
+        ! Source function with low resolution (Note preduct rule on derivatives)
         ddPi  = 2.d0*ck/(5.d0*H_p)*(-dH_p/H_p*Theta(i,1,k) + dTheta(i,1,k)) &
                 +0.3d0*(ddt*Pi+dt*dPi) &
                 -3.d0*ck/(5.d0*H_p)*(-dH_p/H_p*Theta(i,3,k) + dTheta(i,3,k))
 
-        ! Source function with low resolution (Note preduct rule on derivatives)
-        S_lores(i,k) = g*(Theta(i,0,k) + Psi(i,k) + .25d0*Pi) &
-                       + exp(-tau)*(dPsi(i,k) - dPhi(i,k)) &
-                       - 1.d0/ckH_p*((g*dv_b(i,k) + v_b(i,k)*dg) + g*v_b(i,k)*dH_p) &
-                       + .75d0/ck**2*((H_0**2/2.d0*((Omega_m+Omega_b)/exp(x_t(i)) &
-                       + 4.d0*Omega_r/exp(2.d0*x_t(i)) + 4.d0*Omega_lambda*exp(2.d0*x_t(i))))*&
-                       g*Pi + 3.d0*H_p*dH_p*(dg*Pi+g*dPi) + H_p**2* &
-                       (ddg*Pi + 2.d0*dg*dPi+g*ddPi))
+        S_lores(i,k) = g*(Theta(i,0,k) +Psi(i,k) + .25d0*Pi) &
+                       +exp(-tau)*(dPsi(i,k)-dPhi(i,k)) &
+                       -1.d0/ck*(H_p*(g*dv_b(i,k) + v_b(i,k)*dg) + g*v_b(i,k)*dH_p) &
+                       +.75d0/ck**2*((H_0**2/2.d0*((Omega_m+Omega_b)/exp(x_t(i)) &
+                       +4.d0*Omega_r/exp(2.d0*x_t(i)) +4.d0*Omega_lambda*exp(2.d0*x_t(i))))*&
+                       g*Pi +3.d0*H_p*dH_p*(dg*Pi+g*dPi)+H_p**2* &
+                       (ddg*Pi +2.d0*dg*dPi+g*ddPi))
       end do
     end do
 
