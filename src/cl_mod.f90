@@ -60,14 +60,28 @@ contains
     allocate(j_l2(n_spline, l_num))
 
     ! Calculate bessel functions, needed for LOS integration
-    do i = 1, n_spline
-      z_spline(i) = (i-1)*3400d0/(n_spline-1)
-      ! TODO: WHAT IS HAPPENING HERE
-      do l=1, l_num
-        if (z_spline(i)>2.d0) then
-          call sphbes(ls(l),z_spline(i),j_l(i,l))
-        endif
-      end do
+    !do i = 1, n_spline
+    !  z_spline(i) = (i-1)*3400.d0/(n_spline-1.d0)
+    !  ! TODO: WHAT IS HAPPENING HERE
+    !  do l=1, l_num
+    !    if (z_spline(i)>2.d0) then
+    !      call sphbes(ls(l),z_spline(i),j_l(i,l))
+    !    endif
+    !  end do
+    !end do
+
+    do i=1,n_spline
+        z_spline(i) = 0.d0 + (i-1)*(3400.d0-0.d0)/(n_spline-1.d0)
+    end do
+
+    !Calculate spherical bessel functions for select ls
+    write(*,*) 'Compute spherical Bessel functions'
+    do i =1,n_spline
+        do l=1,l_num
+            if(z_spline(i) > 2.d0) then
+                call sphbes(ls(l),z_spline(i), j_l(i,l))
+            endif
+        end do
     end do
 
 
@@ -124,10 +138,7 @@ contains
        cls(l) = integralk*ls(l)*(ls(l)+1.d0)/(2.d0*pi)
 
 
-
-
-
-       !write the integrand in cl integral to file
+       !write the transfer function to file
        if(ls(l)==2) then
            do k=1,k_num
                write (123,'(*(2X, ES14.6E3))') c*k_hires(k)/H_0 , ls(l)*(ls(l)+1.d0)*&
@@ -165,12 +176,13 @@ contains
            end do
        end if
 
-
+      ! Timer for loop
       call cpu_time(finish)
       write(*,*) "l = ", l
       print '("Time = ",f7.2," seconds.")',finish-start
     end do
 
+    ! Close open data files
     close(123)
     close(124)
     close(125)
