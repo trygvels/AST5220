@@ -59,12 +59,12 @@ contains
     end do
 
     ! Open files to write transfer functions
-    open(unit=123, file="integrand1H74.dat", action="write", status="replace")
-    open(unit=124, file="integrand2H74.dat", action="write", status="replace")
-    open(unit=125, file="integrand3H74.dat", action="write", status="replace")
-    open(unit=126, file="integrand4H74.dat", action="write", status="replace")
-    open(unit=127, file="integrand5H74.dat", action="write", status="replace")
-    open(unit=128, file="integrand6H74.dat", action="write", status="replace")
+    open(unit=123, file="integrand1b42.dat", action="write", status="replace")
+    open(unit=124, file="integrand2b42.dat", action="write", status="replace")
+    open(unit=125, file="integrand3b42.dat", action="write", status="replace")
+    open(unit=126, file="integrand4b42.dat", action="write", status="replace")
+    open(unit=127, file="integrand5b42.dat", action="write", status="replace")
+    open(unit=128, file="integrand6b42.dat", action="write", status="replace")
 
     !Spline bessel functions, get second derivative for later splint
     do l=1,l_num
