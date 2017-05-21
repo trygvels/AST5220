@@ -384,7 +384,7 @@ contains
 
 
      do l = 2, lmax_int-1
-       dydx(6+l) = l*ckH_p/(2.d0*l+1.d0)*y(6+l-1) - (l+1.d0)*ckH_p/(2.d0*l+1.d0)*y(6+l+1) + dtau*(y(6+l) - 1.d0/10.d0*y(6+l)*abs(l==2))
+       dydx(6+l) = l*ckH_p/(2.d0*l+1.d0)*y(6+l-1) - (l+1.d0)*ckH_p/(2.d0*l+1.d0)*y(6+l+1) + dt*(y(6+l) - 1.d0/10.d0*y(6+l)*abs(l==2))
      end do
 
      dydx(1) = d_delta

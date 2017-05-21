@@ -176,9 +176,8 @@ contains
         real(dp), dimension(:), intent(out) :: dydx
         real(dp)                            :: n_e
         real(dp)                            :: H
-        n_e  = get_n_e(x)
-        H    = get_H(x)
-        dydx = -n_e*sigma_T/H*c
+
+        dydx = -get_n_e(x)*sigma_T*exp(x)*c/get_H_p(x)
     end subroutine dtaudx
 
   !---------------------- Functions for generalization ----------------------
@@ -188,7 +187,7 @@ contains
       real(dp), intent(in) :: x_in
       real(dp)             :: get_n_e
       !Spline integration with precalculated logarithmic values
-
+      ! TODO: Should n_e be log'ed?
       get_n_e = exp(splint(x_rec, n_e, n_e2, x_in))
   end function get_n_e
 
@@ -229,11 +228,7 @@ contains
 
     real(dp), intent(in) :: x
     real(dp)             :: get_g
-    real(dp)             :: tau
-    real(dp)             :: dtau
-    tau = get_tau(x)
-    dtau = get_dtau(x)
-    get_g = -dtau*exp(-tau)
+    get_g = splint(x_rec, g, g2, x)
   end function get_g
 
   !  Complete routine for computing the derivative of the visibility function, g, at arbitray x
