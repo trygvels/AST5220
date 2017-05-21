@@ -61,12 +61,9 @@ contains
     allocate(k_hires(k_num))
 
     ! Generate hires grid for x and k
-    do i = 1, x_num
+    do i = 1, x_num !x_num and k_num the same length
       x_hires(i) = x_init - x_init*(i-1.d0)/(x_num-1.d0)
-    end do
-
-    do k = 1, k_num
-        k_hires(k)= k_min  + (k_max - k_min)*((k-1.d0)/(k_num-1.d0))**2
+      k_hires(i)= k_min  + (k_max - k_min)*((i-1.d0)/(k_num-1.d0))**2
     end do
 
     allocate(S_lores(n_t,n_k))  ! Lores source function
@@ -156,7 +153,7 @@ contains
        Theta(1,1,k) = -ckH_p/(6.d0)*Phi(1,k)
        Theta(1,2,k) = -20.d0*ckH_p/(45.d0*dt)*Theta(1,1,k)
        do l = 3, lmax_int
-          Theta(1,l,k) = -l*ckH_P*Theta(1,l-1,k)/((2*l+1)*dt)
+          Theta(1,l,k) = -l*ckH_P*Theta(1,l-1,k)/((2.d0*l+1)*dt)
        end do
        Psi(1,k)     = -Phi(1,k) - 12.d0*H_0**2/(ks(k)*c*a_t(1))**2*Omega_r*Theta(1,2,k)
     end do
@@ -260,7 +257,7 @@ contains
            do l = 0, lmax_int
               Theta(i,l,k) = y(6+l)
            end do
-           Psi(i,k)     = - Phi(i,k) - (12.d0*H_0**2.d0)/(ck*a_t(i))**2.d0*Omega_r*Theta(i,2,k)
+           Psi(i,k)     = - Phi(i,k) - (12.d0*H_0**2)/(ck*exp(x_t(i)))**2.d0*Omega_r*Theta(i,2,k)
 
             ! Store derivatives that are required for C_l estimation
             call dy(x_t(i),y,dydx) !Call derivatives subroutine
@@ -375,7 +372,7 @@ contains
 
      ! Derivation
      R         = (4.d0*Omega_r)/(3.d0*Omega_b*a)
-     Psi       = - Phi - 12.d0*(H_0/ck/a)**2.d0*Omega_r*Theta2
+     Psi       = - Phi - 12.d0*(H_0/(ck*a))**2.d0*Omega_r*Theta2
      dPhi      = Psi - (ckH_p**2.d0)/3.d0*Phi + H_0**2.d0/(2.d0*H_p**2.d0)*(Omega_m/a*delta+Omega_b/a*delta_b+4.d0*Omega_r*Theta0/a**2.d0)
      dTheta0   = - ckH_p*Theta1 - dPhi
      d_delta   = ckH_p*v   - 3.d0*dPhi
@@ -383,14 +380,13 @@ contains
      d_v       = - v - ckH_p*Psi
      dv_b      = - v_b - ckH_p*Psi + dt*R*(3.d0*Theta1+v_b)
      dTheta1   = ckH_p/3.d0*Theta0 - 2.d0/3.d0*ckH_p*Theta2 + ckH_p/3.d0*Psi + dt*(Theta1+v_b/3.d0)
-     dTheta2   = 2.d0/5.d0*ckH_p*Theta1 - 3.d0/5.d0*ckH_p*Theta3+dt*0.9d0*Theta2
+     !dTheta2   = 2.d0/5.d0*ckH_p*Theta1 - 3.d0/5.d0*ckH_p*Theta3+dt*0.9d0*Theta2
 
-     do l=3,lmax_int-1
-         dydx(6+l) = l/(2.d0*l+1.d0)*ckH_p*y(5+l) - &
-                     (l+1.d0)/(2.d0*l+1.d0)*ckH_p*y(7+l) +dt*y(6+l)
+
+     do l = 2, lmax_int-1
+       dydx(6+l) = l*ckH_p/(2.d0*l+1.d0)*y(6+l-1) - (l+1.d0)*ckH_p/(2.d0*l+1.d0)*y(6+l+1) + dtau*(y(6+l) - 1.d0/10.d0*y(6+l)*abs(l==2))
      end do
 
-     dydx(6+lmax_int) = ckH_p*y(6+lmax_int-1) - c*(lmax_int+1.d0)/H_p/get_eta(x)*y(6+lmax_int) + dt*y(6+lmax_int)
      dydx(1) = d_delta
      dydx(2) = d_delta_b
      dydx(3) = d_v
@@ -399,23 +395,32 @@ contains
      dydx(6) = dTheta0
      dydx(7) = dTheta1
      dydx(8) = dTheta2
+     dydx(6+l) = ckH_p*y(6+l-1) - c*(l+1.d0)/(H_p*get_eta(x))*y(6+l) + dt*y(6+l)
+     !dydx(6+lmax_int) = ckH_p*y(6+lmax_int-1) - c*(lmax_int+1.d0)/H_p/get_eta(x)*y(6+lmax_int) + dt*y(6+lmax_int)
+
 
   end subroutine dy
 
   ! Time at which tight coupling ends.
   ! dt < 10 or c*k/(H_p*dt) > 0.1 or x > x(start of recombination)
+
   function get_tight_coupling_time(k)
     implicit none
-    integer(i4b)          :: i,n
+
     real(dp), intent(in)  :: k
+    integer(i4b)          :: i, n_test
     real(dp)              :: get_tight_coupling_time, x, x_start_rec
-    x_start_rec = -log(1.d0 + 1630.4d0 )  ! x of start of recombination
-    n = 1d4
-    do i = 0,n
-      x = x_init - i*x_init/n
-      if (x < x_start_rec .and. abs(c*k/(get_H_p(x)*get_dtau(x))) <= 0.1d0 .and. abs(get_dtau(x)) > 10.d0) then
-        get_tight_coupling_time = x
-      end if
+
+    n_test = 1000
+    x_start_rec = -log(1.d0+1630.4d0)
+    x = x_init
+    do i = 1, n_test
+       x = x + (x_start_rec-x_init)/(n_test-1)
+       if ((abs(c*k/(get_H_p(x)*get_dtau(x))) >= 0.1d0 .and. abs(get_dtau(x))<=10.d0) .or. ( x >= x_start_rec)) then
+          ! (abs(get_dtau(x)) <= 10.d0 .and.
+          get_tight_coupling_time = x
+          exit
+       end if
     end do
   end function get_tight_coupling_time
 

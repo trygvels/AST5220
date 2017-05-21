@@ -52,7 +52,7 @@ contains
     do i = 1, n_spline
       z_spline(i) = (i-1)*3400.d0/(n_spline-1.d0)
       do l=1, l_num
-        if (z_spline(i)>2.d0) then
+        if (z_spline(i)>0.d0) then
           call sphbes(ls(l),z_spline(i),j_l(i,l))
         endif
       end do
