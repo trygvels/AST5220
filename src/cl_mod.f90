@@ -80,7 +80,8 @@ contains
     allocate(x_lores(x_num/10))
 
     ! #### C_l COMPUTATION OVER l's ####
-
+    h1 = (x_hires(x_num) - x_hires(1))/x_num
+    h2 = (k_hires(k_num) - k_hires(1))/k_num
     do l = 1, l_num
       !################### METHOD 1 ##################
       !integralk = 0.d0 ! Reset k integral
@@ -125,7 +126,7 @@ contains
           integralx = integralx + integrandx(i)
         end do
         ! Subtract half of first and last integrand for x
-        Theta(l,k) = h1*(integralx - 0.5d0*(integrandx(1)+integrandx(x_num)))
+        Theta(l,k) = h1*(integralx - 0.5d0*(integrandx(1)+integrandx(x_num/10)))
 
 
         ! Integrate C_l
