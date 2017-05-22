@@ -97,7 +97,7 @@ contains
         do i=1, x_num/10.d0-1
            integralx = integralx + (x_lores(i+1)-x_lores(i))*(integrandx(i+1)+integrandx(i))/2.d0
         end do
-
+        Theta(l,k) = integralx
         ! Compute integrand over k
         integrandk(k) = (c*k_hires(k)/H_0)**(n_s-1.d0)*integralx**2/k_hires(k)
       end do
