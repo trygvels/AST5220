@@ -181,8 +181,8 @@ contains
     call spline(ls_dp, cls, yp1, ypn, cls2)
 
     !Spline to get cl at 1200 l's
-    do l = 1, ls(l_num)-1
-      l_hires(l) = ls_dp(1) + (i-1.d0)*(ls_dp(l_num)-ls_dp(1))/(ls_dp(l_num)-2.d0) ! dp hires l
+    do l = 1, ls(l_num)
+      l_hires(l) = ls_dp(1) + (l-1.d0)*(ls_dp(l_num)-ls_dp(1))/(ls_dp(l_num)-2.d0) ! dp hires l
       cl_hires(l) =  splint(ls_dp, cls, cls2, l_hires(l))
     end do
   end subroutine compute_cls
