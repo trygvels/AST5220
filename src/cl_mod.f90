@@ -12,7 +12,7 @@ contains
   ! Driver routine for (finally!) computing the CMB power spectrum
   subroutine compute_cls
     implicit none
-
+    CHARACTER(*), PARAMETER :: fileplace = "/uio/hume/student-u68/trygvels/AST5220/src/data/"
     integer(i4b) :: i, k, l, x_num, l_num, k_num,  n_spline
     real(dp)     :: dx, S_func, j_func, z, eta, eta0, x0, x_min, x_max, d, e
     integer(i4b), allocatable,     dimension(:)       :: ls
@@ -59,12 +59,12 @@ contains
     end do
 
     ! Open files to write transfer functions
-    !open(unit=123, file="integrand1b42.dat", action="write", status="replace")
-    !open(unit=124, file="integrand2b42.dat", action="write", status="replace")
-    !open(unit=125, file="integrand3b42.dat", action="write", status="replace")
-    !open(unit=126, file="integrand4b42.dat", action="write", status="replace")
-    !open(unit=127, file="integrand5b42.dat", action="write", status="replace")
-    !open(unit=128, file="integrand6b42.dat", action="write", status="replace")
+    !open(unit=123, file=fileplace//"integrand1b42.dat", action="write", status="replace")
+    !open(unit=124, file=fileplace//"integrand2b42.dat", action="write", status="replace")
+    !open(unit=125, file=fileplace//"integrand3b42.dat", action="write", status="replace")
+    !open(unit=126, file=fileplace//"integrand4b42.dat", action="write", status="replace")
+    !open(unit=127, file=fileplace//"integrand5b42.dat", action="write", status="replace")
+    !open(unit=128, file=fileplace//"integrand6b42.dat", action="write", status="replace")
 
     !Spline bessel functions, get second derivative for later splint
     do l=1,l_num

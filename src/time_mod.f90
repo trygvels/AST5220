@@ -17,6 +17,7 @@ contains
 
 subroutine initialize_time_mod
   implicit none
+  CHARACTER(*), PARAMETER :: fileplace = "/uio/hume/student-u68/trygvels/AST5220/src/data/"
 
   integer(i4b) :: i, n, n1, n2, n3
   real(dp)     :: z_start_rec, z_end_rec, z_0, x_start_rec, x_end_rec, x_0, dx, x_eta1, x_eta2, eta_init, a_init, step, eps, stepmin, yp1,ypn, rho_cc, rho_m, rho_b, rho_r, rho_lambda, z,x_init
@@ -86,7 +87,7 @@ subroutine initialize_time_mod
   end do
 
   ! Write to file - Eta, x_eta
-  open(1, file="eta.dat", action="write",status="replace")
+  open(1, file=fileplace//"eta.dat", action="write",status="replace")
   do i=1,n_eta
      write(1,*) eta(i), x_eta(i)
   end do
@@ -96,15 +97,15 @@ subroutine initialize_time_mod
   call spline(x_eta, eta,yp1,ypn,eta2)
 
   ! Spline + Interplolation write to file
-  open (2,file="etasplint.dat",action="write",status="replace")
+  open (2,file=fileplace//"etasplint.dat",action="write",status="replace")
   do i=1,n_t
      write (2,*) get_eta(x_t(i)), x_t(i)
   end do
   close(2)
 
   ! Calculating Omegas
-  open(3, file="omegas1.dat", action="write",status="replace")
-  open(5, file="omegas2.dat",action="write",status="replace")
+  open(3, file=fileplace//"omegas1.dat", action="write",status="replace")
+  open(5, file=fileplace//"omegas2.dat",action="write",status="replace")
   do i=1, n_eta
     rho_cc = 3*get_H(x_eta(i))**2/(8*pi*G_grav)
 
@@ -119,7 +120,7 @@ subroutine initialize_time_mod
   close(5)
 
   ! H values write - H(x), H(z)
-  open(4, file="HxHz.dat", action="write",status="replace")
+  open(4, file=fileplace//"HxHz.dat", action="write",status="replace")
   do i=1,n_eta
     z = 1-exp(-x_eta(i))
     write(4,*) get_H(x_eta(i)), z, get_H(log((1-z)**-1))

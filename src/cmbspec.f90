@@ -8,6 +8,7 @@ program cmbspec
   implicit none
   integer(i4b) :: i      ! Number of grid points
   real :: start, finish
+  CHARACTER(*), PARAMETER :: fileplace = "/uio/hume/student-u68/trygvels/AST5220/src/data/"
   call cpu_time(start)
 
   ! Initialize time grids
@@ -17,10 +18,10 @@ program cmbspec
 
   ! ------ Output to file desired quantities here ------
   ! Write to file - x_rec, X_e
-  !open(1, file="Xe.dat", action="write",status="replace")
-  !open(2, file="neLog.dat", action="write",status="replace") ! Eldens
-  !open(3, file="tau.dat", action="write",status="replace") ! taus
-  !open(4, file="g.dat", action="write",status="replace") ! visibility
+  !open(1, file=fileplace//"Xe.dat", action="write",status="replace")
+  !open(2, file=fileplace//"neLog.dat", action="write",status="replace") ! Eldens
+  !open(3, file=fileplace//"tau.dat", action="write",status="replace") ! taus
+  !open(4, file=fileplace//"g.dat", action="write",status="replace") ! visibility
 
   !do i=1, n
   !   write(1,*) x_rec(i), X_e(i)
@@ -40,15 +41,15 @@ program cmbspec
   !write(*,*) "Delta(1,1)", delta(1,1)
   !write(*,*) "Phi(1,1)", Phi(1,1)
   !write(*,*) 'Saving perturbations to file'
-  !open(1,file="delta.dat",action="write",status="replace")
-  !open(2,file="delta_b.dat",action="write",status="replace")
-  !open(3,file="v.dat",action="write",status="replace")
-  !open(4,file="v_b.dat",action="write",status="replace")
-  !open(5,file="Phi.dat",action="write",status="replace")
-  !open(6,file="Psi.dat",action="write",status="replace")
-  !open(7,file="Theta0.dat",action="write",status="replace")
-  !open(8,file="dPhi.dat",action="write",status="replace")
-  !open(9,file="dPsi.dat",action="write",status="replace")
+  !open(1,file=fileplace//"delta.dat",action="write",status="replace")
+  !open(2,file=fileplace//"delta_b.dat",action="write",status="replace")
+  !open(3,file=fileplace//"v.dat",action="write",status="replace")
+  !open(4,file=fileplace//"v_b.dat",action="write",status="replace")
+  !open(5,file=fileplace//"Phi.dat",action="write",status="replace")
+  !open(6,file=fileplace//"Psi.dat",action="write",status="replace")
+  !open(7,file=fileplace//"Theta0.dat",action="write",status="replace")
+  !open(8,file=fileplace//"dPhi.dat",action="write",status="replace")
+  !open(9,file=fileplace//"dPsi.dat",action="write",status="replace")
 
   !do i=1,n_t
   !    write(1,'(*(2X, ES14.6))') delta(i,1),delta(i,5),delta(i,10),delta(i,40),delta(i,60),delta(i,100)
@@ -72,8 +73,8 @@ program cmbspec
   !close(8)
   !close(9)
 
-  !open(123,file="dTheta2.dat",action="write",status="replace")
-  !open(124,file="Theta2.dat",action="write",status="replace")
+  !open(123,file=fileplace//"dTheta2.dat",action="write",status="replace")
+  !open(124,file=fileplace//"Theta2.dat",action="write",status="replace")
   !do i=1,n_t
   !    write(123,'(*(2X, ES14.6))') dTheta(i,2,1),dTheta(i,2,5),dTheta(i,2,10),dTheta(i,2,40),dTheta(i,2,60),dTheta(i,2,100)
   !    write(124,'(*(2X, ES14.6))') Theta(i,2,1),Theta(i,2,5),Theta(i,2,10),Theta(i,2,40),Theta(i,2,60),Theta(i,2,100)
@@ -85,7 +86,7 @@ program cmbspec
 
 
   !write cls and ls to file
-  open (unit=1, file="C_l.dat", action="write", status="replace")
+  open (unit=1, file=fileplace//"C_l.dat", action="write", status="replace")
   do i=1,1200
       write (1,'(*(2X, ES14.6E3))') l_hires(i),cl_hires(i)
   end do
