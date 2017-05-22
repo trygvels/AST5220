@@ -70,17 +70,19 @@ contains
     allocate(S(x_num,k_num))    ! Hires source function
     allocate(S_coeff(4,4,n_t,n_k))
 
-    do k=1,n_k
-      ck = c*ks(k)
-      do i=1,n_t
-        g     = get_g(x_t(i))
-        dg    = get_dg(x_t(i))
-        ddg   = get_ddg(x_t(i))
-        tau   = get_tau(x_t(i))
-        dt    = get_dtau(x_t(i))
-        ddt   = get_ddtau(x_t(i))
-        H_p   = get_H_p(x_t(i))
-        dH_p  = get_dH_p(x_t(i))
+    do i=1,n_t
+      g     = get_g(x_t(i))
+      dg    = get_dg(x_t(i))
+      ddg   = get_ddg(x_t(i))
+      tau   = get_tau(x_t(i))
+      dt    = get_dtau(x_t(i))
+      ddt   = get_ddtau(x_t(i))
+      H_p   = get_H_p(x_t(i))
+      dH_p  = get_dH_p(x_t(i))
+
+      do k=1,n_k
+        ck = c*ks(k)
+        
         Pi    = Theta(i,2,k)
         dPi   = dTheta(i,2,k)
 
