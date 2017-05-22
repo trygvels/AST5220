@@ -13,7 +13,7 @@ contains
   subroutine compute_cls
     implicit none
     CHARACTER(*), PARAMETER :: fileplace = "/uio/hume/student-u68/trygvels/AST5220/src/data/"
-    integer(i4b) :: i, k, l, x_num, l_num, k_num,  n_spline, m
+    integer(i4b) :: i, k, l, x_num, l_num, k_num,  n_spline, ilo
     real(dp)     :: dx, S_func, j_func, z, eta, eta0, x0, x_min, x_max, d, e
     integer(i4b), allocatable,     dimension(:)       :: ls
     real(dp),     allocatable,     dimension(:)       :: integrandx, integrandk
@@ -59,12 +59,12 @@ contains
     end do
 
     ! Open files to write transfer functions
-    !open(unit=123, file=fileplace//"integrand1b42.dat", action="write", status="replace")
-    !open(unit=124, file=fileplace//"integrand2b42.dat", action="write", status="replace")
-    !open(unit=125, file=fileplace//"integrand3b42.dat", action="write", status="replace")
-    !open(unit=126, file=fileplace//"integrand4b42.dat", action="write", status="replace")
-    !open(unit=127, file=fileplace//"integrand5b42.dat", action="write", status="replace")
-    !open(unit=128, file=fileplace//"integrand6b42.dat", action="write", status="replace")
+    open(unit=123, file=fileplace//"integrand1.dat", action="write", status="replace")
+    open(unit=124, file=fileplace//"integrand2.dat", action="write", status="replace")
+    open(unit=125, file=fileplace//"integrand3.dat", action="write", status="replace")
+    open(unit=126, file=fileplace//"integrand4.dat", action="write", status="replace")
+    open(unit=127, file=fileplace//"integrand5.dat", action="write", status="replace")
+    open(unit=128, file=fileplace//"integrand6.dat", action="write", status="replace")
 
     !Spline bessel functions, get second derivative for later splint
     do l=1,l_num
@@ -81,20 +81,16 @@ contains
 
     ! #### C_l COMPUTATION OVER l's ####
 
-    ! Constants for trapezoidal integration
-    !h1 = (x_hires(x_num) - x_hires(1))/x_num
-    !h2 = (k_hires(k_num) - k_hires(1))/k_num
-
     do l = 1, l_num
       integralk = 0.d0 ! Reset k integral
       do k = 1, k_num
         integralx = 0.d0 ! Reset x integral
 
-        ! Compute integrand over k
+        ! Compute integrand over x with 1/10th total array
         do i = 1, x_num/10.d0
-           m = 1 + (i-1)*(x_num-1)/(x_num/10-1)
-           x_lores(i) = x_hires(m)
-           integrandx(i)=S(m,k)*splint(z_spline,j_l(:,l),j_l2(:,l),k_hires(k)*(get_eta(0.d0)-get_eta(x_hires(m))))
+           ilo = 1 + (i-1)*(x_num-1)/(x_num/10-1) !Speed up integration
+           x_lores(i) = x_hires(ilo)
+           integrandx(i)=S(ilo,k)*splint(z_spline,j_l(:,l),j_l2(:,l),k_hires(k)*(get_eta(0.d0)-get_eta(x_hires(ilo))))
         end do
 
         ! Trapezoidal integration over x
@@ -111,55 +107,51 @@ contains
          integralk = integralk + (k_hires(k+1)-k_hires(k))*(integrandk(k+1)+integrandk(k))/2.d0
       end do
 
-
       ! Task: Store C_l in an array. Optionally output to file
       cls(l) = integralk*ls(l)*(ls(l)+1.d0)/(2.d0*pi)
-    !   ! ##### UNIFORM TRAPEZOIDAL INTEGRATION #####
 
 
        !write the transfer function to file
-       !if(ls(l)==2) then
-      !     do k=1,k_num
-      !         write (123,'(*(2X, ES14.6E3))') c*k_hires(k)/H_0 , ls(l)*(ls(l)+1.d0)*&
-      !               Theta(l,k)**2/(c*k_hires(k)/H_0)
-      !     end do
-      ! end if
-      ! if(ls(l)==50) then
-      !     do k=1,k_num
-      !         write (124,'(*(2X, ES14.6E3))') ls(l)*(ls(l)+1.d0)*Theta(l,k)**2 &
-      !               /(c*k_hires(k)/H_0)
-      !     end do
-      ! end if
-      ! if(ls(l)==200) then
-      !     do k=1,k_num
-      !         write (125,'(*(2X, ES14.6E3))') ls(l)*(ls(l)+1.d0)*Theta(l,k)**2 &
-      !               /(c*k_hires(k)/H_0)
-      !     end do
-      ! end if
-      ! if(ls(l)==500) then
-      !     do k=1,k_num
-      !         write (126,'(*(2X, ES14.6E3))') ls(l)*(ls(l)+1.d0)*Theta(l,k)**2 &
-      !               /(c*k_hires(k)/H_0)
-      !     end do
-      ! end if
-      ! if(ls(l)==800) then
-      !     do k=1,k_num
-      !         write (127,'(*(2X, ES14.6E3))') ls(l)*(ls(l)+1.d0)*Theta(l,k)**2 &
-      !               /(c*k_hires(k)/H_0)
-      !     end do
-      ! end if
-      ! if(ls(l)==1200) then
-      !     do k=1,k_num
-      !         write (128,'(*(2X, ES14.6E3))') ls(l)*(ls(l)+1.d0)*Theta(l,k)**2 &
-      !               /(c*k_hires(k)/H_0)
-      !     end do
-      ! end if
-      ! Task: Compute the transfer function, Theta_l(k)
+       if(ls(l)==2) then
+           do k=1,k_num
+               write (123,'(*(2X, ES14.6E3))') c*k_hires(k)/H_0 , ls(l)*(ls(l)+1.d0)*&
+                     Theta(l,k)**2/(c*k_hires(k)/H_0)
+           end do
+       end if
+       if(ls(l)==50) then
+           do k=1,k_num
+               write (124,'(*(2X, ES14.6E3))') ls(l)*(ls(l)+1.d0)*Theta(l,k)**2 &
+                     /(c*k_hires(k)/H_0)
+           end do
+       end if
+       if(ls(l)==200) then
+           do k=1,k_num
+               write (125,'(*(2X, ES14.6E3))') ls(l)*(ls(l)+1.d0)*Theta(l,k)**2 &
+                     /(c*k_hires(k)/H_0)
+           end do
+       end if
+       if(ls(l)==500) then
+           do k=1,k_num
+               write (126,'(*(2X, ES14.6E3))') ls(l)*(ls(l)+1.d0)*Theta(l,k)**2 &
+                     /(c*k_hires(k)/H_0)
+           end do
+       end if
+       if(ls(l)==800) then
+           do k=1,k_num
+               write (127,'(*(2X, ES14.6E3))') ls(l)*(ls(l)+1.d0)*Theta(l,k)**2 &
+                     /(c*k_hires(k)/H_0)
+           end do
+       end if
+       if(ls(l)==1200) then
+           do k=1,k_num
+               write (128,'(*(2X, ES14.6E3))') ls(l)*(ls(l)+1.d0)*Theta(l,k)**2 &
+                     /(c*k_hires(k)/H_0)
+           end do
+       end if
 
      ! Timer for loop
        call cpu_time(finish)
        write(*,*) "l = ", l
-       write(*,*) "cls(l) = ", cls(l)
        print '("Time = ",f7.2," seconds.")',finish-start
     end do
 
@@ -173,6 +165,7 @@ contains
 
     ! Convert ls to double precision
     allocate(ls_dp(l_num))
+
     do l=1,l_num
         ls_dp(l) = ls(l)
     end do
