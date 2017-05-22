@@ -82,7 +82,7 @@ contains
 
       do k=1,n_k
         ck = c*ks(k)
-        
+
         Pi    = Theta(i,2,k)
         dPi   = dTheta(i,2,k)
 
@@ -121,17 +121,17 @@ contains
     integer(i4b) :: l, i, k, i_tc
 
     ! Allocate arrays for perturbation quantities
-    allocate(Theta(n_t, 0:lmax_int, n_k))
-    allocate(delta(n_t, n_k))
-    allocate(delta_b(n_t, n_k))
-    allocate(v(n_t, n_k))
-    allocate(v_b(n_t, n_k))
-    allocate(Phi(n_t, n_k))
-    allocate(Psi(n_t, n_k))
-    allocate(dPhi(n_t, n_k))
-    allocate(dPsi(n_t, n_k))
-    allocate(dv_b(n_t, n_k))
-    allocate(dTheta(n_t, 0:lmax_int, n_k))
+    allocate(Theta(0:n_t, 0:lmax_int, n_k))
+    allocate(delta(0:n_t, n_k))
+    allocate(delta_b(0:n_t, n_k))
+    allocate(v(0:n_t, n_k))
+    allocate(v_b(0:n_t, n_k))
+    allocate(Phi(0:n_t, n_k))
+    allocate(Psi(0:n_t, n_k))
+    allocate(dPhi(0:n_t, n_k))
+    allocate(dPsi(0:n_t, n_k))
+    allocate(dv_b(0:n_t, n_k))
+    allocate(dTheta(0:n_t, 0:lmax_int, n_k))
 
     ! Initialize k-grid, ks; quadratic between k_min and k_max
     allocate(ks(n_k))
@@ -140,24 +140,24 @@ contains
     end do
 
     ! Initial contitions for B-E-equations
-    Phi(1,:)     = 1d0
-    delta(1,:)   = 1.5d0*Phi(1,:)
-    delta_b(1,:) = delta(1,:)
-    Theta(1,0,:) = 0.5d0*Phi(1,:)
+    Phi(0,:)     = 1d0
+    delta(0,:)   = 1.5d0*Phi(0,:)
+    delta_b(0,:) = delta(0,:)
+    Theta(0,0,:) = 0.5d0*Phi(0,:)
     do k = 1, n_k
 
       ! Effectivisation
        ckH_p        = c*ks(k)/get_H_p(x_init)
        dt           = get_dtau(x_init)
 
-       v(1,k)       = ckH_p/(2.d0)*Phi(1,k)
-       v_b(1,k)     = v(1,k)
-       Theta(1,1,k) = -ckH_p/(6.d0)*Phi(1,k)
-       Theta(1,2,k) = -20.d0*ckH_p/(45.d0*dt)*Theta(1,1,k)
+       v(0,k)       = ckH_p/(2.d0)*Phi(0,k)
+       v_b(0,k)     = v(0,k)
+       Theta(0,1,k) = -ckH_p/(6.d0)*Phi(0,k)
+       Theta(0,2,k) = -20.d0*ckH_p/(45.d0*dt)*Theta(0,1,k)
        do l = 3, lmax_int
-          Theta(1,l,k) = -l*ckH_P*Theta(1,l-1,k)/((2.d0*l+1)*dt)
+          Theta(0,l,k) = -l*ckH_P*Theta(0,l-1,k)/((2.d0*l+1)*dt)
        end do
-       Psi(1,k)     = -Phi(1,k) - 12.d0*H_0**2/(ks(k)*c*a_t(1))**2*Omega_r*Theta(1,2,k)
+       Psi(0,k)     = -Phi(0,k) - 12.d0*H_0**2/(ks(k)*c*a_t(1))**2*Omega_r*Theta(0,2,k)
     end do
 
   end subroutine initialize_perturbation_eqns
@@ -185,13 +185,13 @@ contains
        ck = k_current*c   ! One calculation for each iteration
 
        ! Initialize equation set for tight coupling
-       y_tight_coupling(1) = delta(1,k)
-       y_tight_coupling(2) = delta_b(1,k)
-       y_tight_coupling(3) = v(1,k)
-       y_tight_coupling(4) = v_b(1,k)
-       y_tight_coupling(5) = Phi(1,k)
-       y_tight_coupling(6) = Theta(1,0,k)
-       y_tight_coupling(7) = Theta(1,1,k)
+       y_tight_coupling(1) = delta(0,k)
+       y_tight_coupling(2) = delta_b(0,k)
+       y_tight_coupling(3) = v(0,k)
+       y_tight_coupling(4) = v_b(0,k)
+       y_tight_coupling(5) = Phi(0,k)
+       y_tight_coupling(6) = Theta(0,0,k)
+       y_tight_coupling(7) = Theta(0,1,k)
 
        ! Find the time to which tight coupling is assumed
        x_tc = get_tight_coupling_time(k_current)
