@@ -82,38 +82,39 @@ contains
     ! #### C_l COMPUTATION OVER l's ####
 
     ! Constants for trapezoidal integration
-    h1 = (x_hires(x_num) - x_hires(1))/x_num
-    h2 = (k_hires(k_num) - k_hires(1))/k_num
+    !h1 = (x_hires(x_num) - x_hires(1))/x_num
+    !h2 = (k_hires(k_num) - k_hires(1))/k_num
 
     do l = 1, l_num
 
-       ! ##### UNIFORM TRAPEZOIDAL INTEGRATION #####
-       ! Integrating both functions in same loop!
+    !   ! ##### UNIFORM TRAPEZOIDAL INTEGRATION #####
+    !   ! Integrating both functions in same loop!
 
-       integralk = 0 ! Reset integral for each value of cls
-       do k = 1, k_num
-         integralx = 0 ! Reset integral for each value of theta
+    !   integralk = 0 ! Reset integral for each value of cls
+    !   do k = 1, k_num
+    !     integralx = 0 ! Reset integral for each value of theta
 
-         ! Integrate theta
-         do i = 1, x_num
-           integrandx(i) = S(i,k)*j_lfunc(l,k_hires(k),x_hires(i))
-           integralx = integralx + integrandx(i)
-         end do
+    !     ! Integrate theta
+    !     do i = 1, x_num
+    !       integrandx(i) = S(i,k)*j_lfunc(l,k_hires(k),x_hires(i))
+    !       integralx = integralx + integrandx(i)
+    !     end do
          ! Subtract half of first and last integrand for x
-         Theta(l,k) = h1*(integralx - 0.5d0*(integrandx(1)+integrandx(x_num)))
+    !     Theta(l,k) = h1*(integralx - 0.5d0*(integrandx(1)+integrandx(x_num)))
 
 
          ! Integrate C_l
-         integrandk(k) = (c*k_hires(k)/H_0)**(n_s-1.d0)*Theta(l,k)**2/k_hires(k)
-         integralk = integralk + integrandk(k)
-       end do
+    !     integrandk(k) = (c*k_hires(k)/H_0)**(n_s-1.d0)*Theta(l,k)**2/k_hires(k)
+    !     integralk = integralk + integrandk(k)
+    !   end do
 
        ! Subtract half of first and last integrand for k
-       integralk = h2*(integralk - 0.5d0*(integrandk(1)+integrandk(k_num)))
+    !   integralk = h2*(integralk - 0.5d0*(integrandk(1)+integrandk(k_num)))
 
        ! Store C_l in an array. Optionally output to file
-       cls(l) = integralk*ls(l)*(ls(l)+1.d0)/(2.d0*pi)
+    !   cls(l) = integralk*ls(l)*(ls(l)+1.d0)/(2.d0*pi)
 
+       ! ######## ORIGINAL###
 
        !write the transfer function to file
        !if(ls(l)==2) then
@@ -152,12 +153,37 @@ contains
       !               /(c*k_hires(k)/H_0)
       !     end do
       ! end if
+      ! Task: Compute the transfer function, Theta_l(k)
 
-      ! Timer for loop
-      call cpu_time(finish)
-      write(*,*) "l = ", l
-      print '("Time = ",f7.2," seconds.")',finish-start
+      ! ALTERNATE #######
+       do k = 1, k_num
+          ! Compute integrand for current k
+          do i = 1, x_num
+             integrandx(i)=S(i,k)*splint(z_spline,j_l(:,l),j_l2(:,l),k_hires(k)*(get_eta(0.d0)-get_eta(x_hires(i))))
+          end do
+
+          ! integrate with trapezoidal, maybe improve later
+          call trapz(x_hires, integrandx(1:5000), Theta(l,k))
+
+       end do
+
+       ! Task: Integrate P(k) * (Theta_l^2 / k) over k to find un-normalized C_l's
+       do k = 1, k_num
+          integrandk(k) = (c*k_hires(k)/H_0)**(n_s-1.d0)*Theta(l,k)**2/k_hires(k)
+       end do
+       call trapz(k_hires, integrandk, integralx)
+
+       ! Task: Store C_l in an array. Optionally output to file
+       cls(l) = integralx*ls(l)*(ls(l)+1.d0)/(2.d0*pi)
+     ! Timer for loop
+       call cpu_time(finish)
+       write(*,*) "l = ", l
+       print '("Time = ",f7.2," seconds.")',finish-start
     end do
+
+
+
+
 
     ! Close open data files
     close(123)
@@ -196,4 +222,22 @@ contains
     j_lfunc = splint(z_spline, j_l(:,l), j_l2(:,l), k*(get_eta(0.d0)-get_eta(x)))
   end function j_lfunc
 
+  subroutine trapz(x,y,integral)
+    implicit none
+    real(dp), dimension(:), intent(in)  :: x,y
+    real(dp),               intent(out) :: integral
+    integer(i4b)                        :: n, i
+
+    if (size(x) .ne. size(y)) then
+       write(*,*) 'x and y does not have same shape'
+       return
+    end if
+
+    integral = 0.d0
+    n = size(x)
+    do i=1, n-1
+       integral = integral + (x(i+1)-x(i))*(y(i+1)+y(i))/2.d0
+    end do
+
+  end subroutine trapz
 end module cl_mod
