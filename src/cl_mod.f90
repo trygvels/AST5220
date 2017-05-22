@@ -92,7 +92,7 @@ contains
 
         ! Compute integrand over k
         do i = 1, x_num/10.d0
-           m = 1 + (i-1)*(x_hires-1)/(x_hires/10-1)
+           m = 1 + (i-1)*(x_num-1)/(x_num/10-1)
            x_lores(i) = x_hires(m)
            integrandx(i)=S(m,k)*splint(z_spline,j_l(:,l),j_l2(:,l),k_hires(k)*(get_eta(0.d0)-get_eta(x_hires(m))))
         end do
