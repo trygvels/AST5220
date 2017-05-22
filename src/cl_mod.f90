@@ -50,7 +50,7 @@ contains
 
     ! Calculate bessel functions, with 5400 sampled points between z = 0 to 3500
     do i = 1, n_spline
-      z_spline(i) = (i-1)*3400.d0/(n_spline-1.d0)
+      z_spline(i) = (i-1.d0)*3500.d0/(n_spline-1.d0)
       do l=1, l_num
         if (z_spline(i)>0.d0) then
           call sphbes(ls(l),z_spline(i),j_l(i,l))
@@ -68,7 +68,7 @@ contains
 
     !Spline bessel functions, get second derivative for later splint
     do l=1,l_num
-          call spline(z_spline, j_l(:,l), yp1, ypn, j_l2(:,l))
+          call spline(z_spline, j_l(:,l), 1.d30, 1.d30, j_l2(:,l))
     end do
 
 
@@ -181,8 +181,8 @@ contains
     call spline(ls_dp, cls, yp1, ypn, cls2)
 
     !Spline to get cl at 1200 l's
-    do l = 1, int(maxval(ls))
-      l_hires(l) = l ! dp hires l
+    do l = 1, ls(l_num)-1
+      l_hires(l) = ls_dp(1) + (i-1.d0)*(ls_dp(l_num)-ls_dp(1))/(ls_dp(l_num)-2.d0) ! dp hires l
       cl_hires(l) =  splint(ls_dp, cls, cls2, l_hires(l))
     end do
   end subroutine compute_cls
