@@ -86,7 +86,7 @@ program cmbspec
 
 
   !write cls and ls to file
-  open (unit=1, file=fileplace//"C_l.dat", action="write", status="replace")
+  open (unit=1, file=fileplace//"C_lh66.dat", action="write", status="replace")
   do i=1,1200
       write (1,'(*(2X, ES14.6E3))') l_hires(i),cl_hires(i)
   end do

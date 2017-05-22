@@ -13,7 +13,7 @@ contains
   subroutine compute_cls
     implicit none
     CHARACTER(*), PARAMETER :: fileplace = "/uio/hume/student-u68/trygvels/AST5220/src/data/"
-    integer(i4b) :: i, k, l, x_num, l_num, k_num,  n_spline, ilo
+    integer(i4b) :: i, k, l, x_num, l_num, k_num,  n_spline, ilo, method
     real(dp)     :: dx, S_func, j_func, z, eta, eta0, x0, x_min, x_max, d, e
     integer(i4b), allocatable,     dimension(:)       :: ls
     real(dp),     allocatable,     dimension(:)       :: integrandx, integrandk
@@ -80,65 +80,78 @@ contains
     allocate(x_lores(x_num/10))
 
     ! #### C_l COMPUTATION OVER l's ####
-    h1 = (x_hires(x_num) - x_hires(1))/x_num
-    h2 = (k_hires(k_num) - k_hires(1))/k_num
+    method = 2 !Change to change method
+
     do l = 1, l_num
-      !################### METHOD 1 ##################
-      !integralk = 0.d0 ! Reset k integral
-      !do k = 1, k_num
-      !  integralx = 0.d0 ! Reset x integral
+      if (method == 1) then
+        !###############################################
+        !################### METHOD 1 ##################
+        !###############################################
 
-      !  ! Compute integrand over x with 1/10th total array
-      !  do i = 1, x_num/10.d0
-      !     ilo = 1 + (i-1)*(x_num-1)/(x_num/10-1) !Speed up integration
-      !     x_lores(i) = x_hires(ilo)
-      !     integrandx(i)=S(ilo,k)*splint(z_spline,j_l(:,l),j_l2(:,l),k_hires(k)*(get_eta(0.d0)-get_eta(x_hires(ilo))))
-      !  end do
+        integralk = 0.d0 ! Reset k integral
+        do k = 1, k_num
+          integralx = 0.d0 ! Reset x integral
 
-      !  ! Trapezoidal integration over x
-      !  do i=1, x_num/10.d0-1
-      !     integralx = integralx + (x_lores(i+1)-x_lores(i))*(integrandx(i+1)+integrandx(i))/2.d0
-      !  end do
-      !  Theta(l,k) = integralx
-      !  ! Compute integrand over k
-      !  integrandk(k) = (c*k_hires(k)/H_0)**(n_s-1.d0)*integralx**2/k_hires(k)
-      !end do
+          ! Compute integrand over x with 1/10th total array
+          do i = 1, x_num/10.d0
+             ilo = 1 + (i-1)*(x_num-1)/(x_num/10-1) !Speed up integration
+             x_lores(i) = x_hires(ilo)
+             integrandx(i)=S(ilo,k)*splint(z_spline,j_l(:,l),j_l2(:,l),k_hires(k)*(get_eta(0.d0)-get_eta(x_hires(ilo))))
+          end do
 
-      !! Trapezoidal integration over k
-      !do k=1, k_num-1
-      !   integralk = integralk + (k_hires(k+1)-k_hires(k))*(integrandk(k+1)+integrandk(k))/2.d0
-      !end do
-
-      !! Task: Store C_l in an array. Optionally output to file
-      !cls(l) = integralk*ls(l)*(ls(l)+1.d0)/(2.d0*pi)
-
-      !################### METHOD 2 ##################
-
-      integralk = 0 ! Reset integral for each value of cls
-      do k = 1, k_num
-        integralx = 0 ! Reset integral for each value of theta
-
-        ! Integrate theta
-        do i = 1, x_num/10
-          ilo = 1 + (i-1)*(x_num-1)/(x_num/10-1) !Speed up integration
-          x_lores(i) = x_hires(ilo)
-          integrandx(i) = S(ilo,k)*splint(z_spline,j_l(:,l),j_l2(:,l),k_hires(k)*(get_eta(0.d0)-get_eta(x_hires(ilo))))
-          integralx = integralx + integrandx(i)
+          ! Trapezoidal integration over x
+          do i=1, x_num/10.d0-1
+             integralx = integralx + (x_lores(i+1)-x_lores(i))*(integrandx(i+1)+integrandx(i))/2.d0
+          end do
+          Theta(l,k) = integralx
+          ! Compute integrand over k
+          integrandk(k) = (c*k_hires(k)/H_0)**(n_s-1.d0)*integralx**2/k_hires(k)
         end do
-        ! Subtract half of first and last integrand for x
-        Theta(l,k) = h1*(integralx - 0.5d0*(integrandx(1)+integrandx(x_num/10)))
+
+        ! Trapezoidal integration over k
+        do k=1, k_num-1
+           integralk = integralk + (k_hires(k+1)-k_hires(k))*(integrandk(k+1)+integrandk(k))/2.d0
+        end do
+
+        ! Task: Store C_l in an array. Optionally output to file
+        cls(l) = integralk*ls(l)*(ls(l)+1.d0)/(2.d0*pi)
+
+      else if (method == 2) then
+        !###############################################
+        !################### METHOD 2 ##################
+        !###############################################
+
+        integralk = 0 ! Reset integral for each value of cls
+        do k = 1, k_num
+          integralx = 0 ! Reset integral for each value of theta
+
+          ! Integrate theta
+          do i = 1, x_num/10
+            ilo = 1 + (i-1)*(x_num-1)/(x_num/10-1) !Speed up integration
+            x_lores(i) = x_hires(ilo)
+            integrandx(i) = S(ilo,k)*splint(z_spline,j_l(:,l),j_l2(:,l),k_hires(k)*(get_eta(0.d0)-get_eta(x_hires(ilo))))
+            integralx = integralx + integrandx(i)
+          end do
+          ! Subtract half of first and last integrand for x
+          h1 = (x_lores(x_num/10) - x_lores(1))/(x_num/10)
+          Theta(l,k) = h1*(integralx - 0.5d0*(integrandx(1)+integrandx(x_num/10)))
+
+          ! Integrate C_l
+          integrandk(k) = (c*k_hires(k)/H_0)**(n_s-1.d0)*Theta(l,k)**2/k_hires(k)
+          integralk = integralk + integrandk(k)
+        end do
+
+        ! Subtract half of first and last integrand for k
+        h2 = (k_hires(k_num) - k_hires(1))/k_num
+        integralk = h2*(integralk - 0.5d0*(integrandk(1)+integrandk(k_num)))
+
+        ! Store C_l in an array. Optionally output to file
+        cls(l) = integralk*ls(l)*(ls(l)+1.d0)/(2.d0*pi)
+      end if
 
 
-        ! Integrate C_l
-        integrandk(k) = (c*k_hires(k)/H_0)**(n_s-1.d0)*Theta(l,k)**2/k_hires(k)
-        integralk = integralk + integrandk(k)
-      end do
 
-      ! Subtract half of first and last integrand for k
-      integralk = h2*(integralk - 0.5d0*(integrandk(1)+integrandk(k_num)))
 
-      ! Store C_l in an array. Optionally output to file
-      cls(l) = integralk*ls(l)*(ls(l)+1.d0)/(2.d0*pi)
        !write the transfer function to file
       ! if(ls(l)==2) then
       !     do k=1,k_num
