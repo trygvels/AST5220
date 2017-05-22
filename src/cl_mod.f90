@@ -111,7 +111,7 @@ contains
 
 
       ! Task: Store C_l in an array. Optionally output to file
-      cls(l) = integralx*ls(l)*(ls(l)+1.d0)/(2.d0*pi)
+      cls(l) = integralk*ls(l)*(ls(l)+1.d0)/(2.d0*pi)
     !   ! ##### UNIFORM TRAPEZOIDAL INTEGRATION #####
 
 
