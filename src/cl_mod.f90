@@ -5,7 +5,7 @@ module cl_mod
   implicit none
   real(dp),     allocatable, dimension(:,:)     :: j_l, j_l2
   real(dp),     allocatable, dimension(:)       :: z_spline, j_l_spline, j_l_spline2
-  real(dp),     allocatable, dimension(:)       :: x_hires, k_hires,  l_hires, cl_hires
+  real(dp),     allocatable, dimension(:)       :: x_hires, k_hires,  l_hires, cl_hires, x_lores
 
 contains
 
@@ -13,7 +13,7 @@ contains
   subroutine compute_cls
     implicit none
     CHARACTER(*), PARAMETER :: fileplace = "/uio/hume/student-u68/trygvels/AST5220/src/data/"
-    integer(i4b) :: i, k, l, x_num, l_num, k_num,  n_spline
+    integer(i4b) :: i, k, l, x_num, l_num, k_num,  n_spline, m
     real(dp)     :: dx, S_func, j_func, z, eta, eta0, x0, x_min, x_max, d, e
     integer(i4b), allocatable,     dimension(:)       :: ls
     real(dp),     allocatable,     dimension(:)       :: integrandx, integrandk
@@ -77,7 +77,7 @@ contains
     allocate(integrandk(k_num))
     allocate(cls(l_num))
     allocate(cls2(l_num))
-
+    allocate(x_lores(x_num/10))
 
     ! #### C_l COMPUTATION OVER l's ####
 
@@ -91,17 +91,19 @@ contains
         integralx = 0.d0 ! Reset x integral
 
         ! Compute integrand over k
-        do i = 1, x_num
-           integrandx(i)=S(i,k)*splint(z_spline,j_l(:,l),j_l2(:,l),k_hires(k)*(get_eta(0.d0)-get_eta(x_hires(i))))
+        do i = 1, x_num/10.d0
+           m = 1 + (i-1)*(x_hires-1)/(x_hires/10-1)
+           x_lores(i) = x_hires(m)
+           integrandx(i)=S(m,k)*splint(z_spline,j_l(:,l),j_l2(:,l),k_hires(k)*(get_eta(0.d0)-get_eta(x_hires(m))))
         end do
 
         ! Trapezoidal integration over x
-        do i=1, x_num-1
-           integralx = integralx + (x_hires(i+1)-x_hires(i))*(integrandx(i+1)+integrandx(i))/2.d0
+        do i=1, x_num/10.d0-1
+           integralx = integralx + (x_lores(i+1)-x_lores(i))*(integrandx(i+1)+integrandx(i))/2.d0
         end do
 
         ! Compute integrand over k
-        integrandk(k) = (c*k_hires(k)/H_0)**(n_s-1.d0)*Theta(l,k)**2/k_hires(k)
+        integrandk(k) = (c*k_hires(k)/H_0)**(n_s-1.d0)*integralx**2/k_hires(k)
       end do
 
       ! Trapezoidal integration over k
@@ -157,6 +159,7 @@ contains
      ! Timer for loop
        call cpu_time(finish)
        write(*,*) "l = ", l
+       write(*,*) "cls(l) = ", cls(l)
        print '("Time = ",f7.2," seconds.")',finish-start
     end do
 
