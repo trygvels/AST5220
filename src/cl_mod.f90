@@ -20,7 +20,7 @@ contains
     real(dp),     allocatable,     dimension(:)       :: cls, cls2, ls_dp
     real(dp),     allocatable,     dimension(:,:,:,:) :: S_coeff
     real(dp),     allocatable,     dimension(:,:)     :: S, S2
-    real(dp),     allocatable,     dimension(:,:)     :: Theta_l
+    real(dp),     allocatable,     dimension(:,:)     :: Theta_l, Theta2_l
     real :: start, finish
     real(dp) :: integralx, integralk, h1, h2
 
@@ -81,7 +81,7 @@ contains
 
     ! #### C_l COMPUTATION OVER l's ####
     ! Method 1 = fast, method 2 = slow
-    method = 2
+    method = 1
 
     do l = 1, l_num
       if (method == 1) then
@@ -131,14 +131,6 @@ contains
           h1 = (x_hires(x_num) - x_hires(1))/(x_num)
           Theta_l(l,k) = h1*(integralx - 0.5d0*(integrandx(1)+integrandx(x_num)))
 
-          if(l==100 .and. k==767) then
-              open (unit=17 ,file="Sj_l.dat",action="write",status="replace")
-                  do i=1,x_num
-                      write (17 ,*) x_hires(i), integrandx(i)
-                  end do
-              close (17)
-          !stop
-          end if
           ! Integrate C_l
           integrandk(k) = (c*k_hires(k)/H_0)**(n_s-1.d0)*Theta_l(l,k)**2/k_hires(k)
           integralk = integralk + integrandk(k)
@@ -218,13 +210,6 @@ contains
     ! Task: Spline C_l's found above, and output smooth C_l curve for each integer l
     allocate(cl_hires(int(maxval(ls))))
     allocate(l_hires(int(maxval(ls))))
-    allocate(Theta2_l(l_num,5))
-    ! Splining transfer function
-    call spline(ls_dp, Theta_l(:,0),yp1,ypn,Theta2_l(:,1))
-    call spline(ls_dp, Theta_l(:,2000),yp1,ypn,Theta2_l(:,1))
-    call spline(ls_dp, Theta_l(:,3000),yp1,ypn,Theta2_l(:,1))
-    call spline(ls_dp, Theta_l(:,4000),yp1,ypn,Theta2_l(:,1))
-    call spline(ls_dp, Theta_l(:,5000),yp1,ypn,Theta2_l(:,1))
 
     ! Spline cl, get second derivative for splint
     call spline(ls_dp, cls, yp1, ypn, cls2)
@@ -235,9 +220,34 @@ contains
       cl_hires(l) =  splint(ls_dp, cls, cls2, l_hires(l))
     end do
 
+    ! Transfer functions
+    allocate(Theta2_l(l_num,5))
+
+    ! Splining transfer function
+    call spline(ls_dp, Theta_l(:,0),yp1,ypn,Theta2_l(:,1))
+    call spline(ls_dp, Theta_l(:,1000),yp1,ypn,Theta2_l(:,1))
+    call spline(ls_dp, Theta_l(:,2000),yp1,ypn,Theta2_l(:,1))
+    call spline(ls_dp, Theta_l(:,3000),yp1,ypn,Theta2_l(:,1))
+    call spline(ls_dp, Theta_l(:,4000),yp1,ypn,Theta2_l(:,1))
+
+    open (unit=31, file=fileplace//"transfer1.dat", action="write", status="replace")
+    open (unit=32, file=fileplace//"transfer2.dat", action="write", status="replace")
+    open (unit=33, file=fileplace//"transfer3.dat", action="write", status="replace")
+    open (unit=34, file=fileplace//"transfer4.dat", action="write", status="replace")
+    open (unit=35, file=fileplace//"transfer5.dat", action="write", status="replace")
     ! Write splint transfer functions
     do l = 1, 1200
-      write (1,'(*(2X, ES14.6E3))') splint(ls_dp, Theta_l(:,1000), cls2, l_hires(l))
+      write (31,'(*(2X, ES14.6E3))') splint(ls_dp, Theta_l(:,0), Theta2_l(:,1), l_hires(l))
+      write (32,'(*(2X, ES14.6E3))') splint(ls_dp, Theta_l(:,1000), Theta2_l(:,2), l_hires(l))
+      write (33,'(*(2X, ES14.6E3))') splint(ls_dp, Theta_l(:,2000), Theta2_l(:,3), l_hires(l))
+      write (34,'(*(2X, ES14.6E3))') splint(ls_dp, Theta_l(:,3000), Theta2_l(:,4), l_hires(l))
+      write (34,'(*(2X, ES14.6E3))') splint(ls_dp, Theta_l(:,4000), Theta2_l(:,5), l_hires(l))
+    end do
+    close(31)
+    close(32)
+    close(33)
+    close(34)
+    close(35)
   end subroutine compute_cls
 
 end module cl_mod
