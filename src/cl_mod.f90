@@ -42,7 +42,6 @@ contains
 
     ! Calculate Hires source function from evolution_mod
     call get_hires_source_function(x_hires,k_hires,S)
-    write(*,*) k_hires(1)*H0/c,k_hires(1000)*H0/c,k_hires(2000)*H0/c,k_hires(3000)*H0/c,k_hires(4000)*H0/c
     n_spline = 5400
     allocate(z_spline(n_spline))    !j_l(z), not redshift
     allocate(j_l(n_spline, l_num))
