@@ -186,10 +186,10 @@ contains
 
     ! Splining transfer function
     call spline(ls_dp, Theta_l(:,0),yp1,ypn,Theta2_l(:,1))
-    call spline(ls_dp, Theta_l(:,1000),yp1,ypn,Theta2_l(:,1))
-    call spline(ls_dp, Theta_l(:,2000),yp1,ypn,Theta2_l(:,1))
-    call spline(ls_dp, Theta_l(:,3000),yp1,ypn,Theta2_l(:,1))
-    call spline(ls_dp, Theta_l(:,4000),yp1,ypn,Theta2_l(:,1))
+    call spline(ls_dp, Theta_l(:,1000),yp1,ypn,Theta2_l(:,2))
+    call spline(ls_dp, Theta_l(:,2000),yp1,ypn,Theta2_l(:,3))
+    call spline(ls_dp, Theta_l(:,3000),yp1,ypn,Theta2_l(:,4))
+    call spline(ls_dp, Theta_l(:,4000),yp1,ypn,Theta2_l(:,5))
 
     open (unit=31, file=fileplace//"transfer1.dat", action="write", status="replace")
     open (unit=32, file=fileplace//"transfer2.dat", action="write", status="replace")
@@ -197,7 +197,7 @@ contains
     open (unit=34, file=fileplace//"transfer4.dat", action="write", status="replace")
     open (unit=35, file=fileplace//"transfer5.dat", action="write", status="replace")
     ! Write splint transfer functions
-    
+    write(*,*) k_hires(0)*H0/c, k_hires(1000)*H0/c,k_hires(2000)*H0/c,k_hires(3000)*H0/c,k_hires(4000)*H0/c
     write (31,'(*(2X, ES14.6E3))') c*k_hires(0)/H0
     write (32,'(*(2X, ES14.6E3))') c*k_hires(1000)/H0
     write (33,'(*(2X, ES14.6E3))') c*k_hires(2000)/H0
