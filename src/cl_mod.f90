@@ -133,7 +133,7 @@ contains
             integrandx(i) = S(ilo,k)*splint(z_spline,j_l(:,l),j_l2(:,l),k_hires(k)*(get_eta(0.d0)-get_eta(x_hires(ilo))))
             integralx = integralx + integrandx(i)
           end do
-          if(l==17 .and. k==2000) then
+          if(l==100 .and. k==160) then
                open (unit=17 ,file="Sj_l.dat",action="write",status="replace")
                    do i=1,x_num
                        write (17 ,*) x_hires(i),integrandx(i)
