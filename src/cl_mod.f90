@@ -13,7 +13,7 @@ contains
   subroutine compute_cls
     implicit none
     CHARACTER(*), PARAMETER :: fileplace = "/uio/hume/student-u68/trygvels/AST5220/src/data/"
-    integer(i4b) :: i, k, l, x_num, l_num, k_num,  n_spline, ilo, method
+    integer(i4b) :: i, k, l, x_num, l_num, k_num,  n_spline, ilo, method, savetrans
     real(dp)     :: dx, S_func, j_func, z, eta, eta0, x0, x_min, x_max, d, e
     integer(i4b), allocatable,     dimension(:)       :: ls
     real(dp),     allocatable,     dimension(:)       :: integrandx, integrandk
@@ -42,7 +42,7 @@ contains
 
     ! Calculate Hires source function from evolution_mod
     call get_hires_source_function(x_hires,k_hires,S)
-
+    write(*,*) k_hires(1)*H0/c,k_hires(1000)*H0/c,k_hires(2000)*H0/c,k_hires(3000)*H0/c,k_hires(4000)*H0/c
     n_spline = 5400
     allocate(z_spline(n_spline))    !j_l(z), not redshift
     allocate(j_l(n_spline, l_num))
@@ -57,14 +57,6 @@ contains
         endif
       end do
     end do
-
-    ! Open files to write transfer functions
-    !open(unit=123, file=fileplace//"integrand1.dat", action="write", status="replace")
-    !open(unit=124, file=fileplace//"integrand2.dat", action="write", status="replace")
-    !open(unit=125, file=fileplace//"integrand3.dat", action="write", status="replace")
-    !open(unit=126, file=fileplace//"integrand4.dat", action="write", status="replace")
-    !open(unit=127, file=fileplace//"integrand5.dat", action="write", status="replace")
-    !open(unit=128, file=fileplace//"integrand6.dat", action="write", status="replace")
 
     !Spline bessel functions, get second derivative for later splint
     do l=1,l_num
@@ -81,7 +73,7 @@ contains
 
     ! #### C_l COMPUTATION OVER l's ####
     ! Method 1 = fast, method 2 = slow
-    method = 1
+    method = 2
 
     do l = 1, l_num
       if (method == 1) then
@@ -152,15 +144,6 @@ contains
     end do
 
 
-
-    ! Close open data files
-    !close(123)
-    !close(124)
-    !close(125)
-    !close(126)
-    !close(127)
-    !close(128)
-
     ! Convert ls to double precision
     allocate(ls_dp(l_num))
 
@@ -185,36 +168,40 @@ contains
     allocate(Theta2_l(l_num,5))
 
     ! Splining transfer function
-    call spline(ls_dp, Theta_l(:,0),yp1,ypn,Theta2_l(:,1))
-    call spline(ls_dp, Theta_l(:,1000),yp1,ypn,Theta2_l(:,2))
-    call spline(ls_dp, Theta_l(:,2000),yp1,ypn,Theta2_l(:,3))
-    call spline(ls_dp, Theta_l(:,3000),yp1,ypn,Theta2_l(:,4))
-    call spline(ls_dp, Theta_l(:,4000),yp1,ypn,Theta2_l(:,5))
+    savetrans = 0
+    if (savetrans = 1) then
 
-    open (unit=31, file=fileplace//"transfer1.dat", action="write", status="replace")
-    open (unit=32, file=fileplace//"transfer2.dat", action="write", status="replace")
-    open (unit=33, file=fileplace//"transfer3.dat", action="write", status="replace")
-    open (unit=34, file=fileplace//"transfer4.dat", action="write", status="replace")
-    open (unit=35, file=fileplace//"transfer5.dat", action="write", status="replace")
-    ! Write splint transfer functions
-    write(*,*) k_hires(0)*H0/c, k_hires(1000)*H0/c,k_hires(2000)*H0/c,k_hires(3000)*H0/c,k_hires(4000)*H0/c
-    write (31,'(*(2X, ES14.6E3))') c*k_hires(0)/H0
-    write (32,'(*(2X, ES14.6E3))') c*k_hires(1000)/H0
-    write (33,'(*(2X, ES14.6E3))') c*k_hires(2000)/H0
-    write (34,'(*(2X, ES14.6E3))') c*k_hires(3000)/H0
-    write (35,'(*(2X, ES14.6E3))') c*k_hires(4000)/H0
-    do l = 1, 1200
-      write (31,'(*(2X, ES14.6E3))') splint(ls_dp, Theta_l(:,0), Theta2_l(:,1), l_hires(l))
-      write (32,'(*(2X, ES14.6E3))') splint(ls_dp, Theta_l(:,1000), Theta2_l(:,2), l_hires(l))
-      write (33,'(*(2X, ES14.6E3))') splint(ls_dp, Theta_l(:,2000), Theta2_l(:,3), l_hires(l))
-      write (34,'(*(2X, ES14.6E3))') splint(ls_dp, Theta_l(:,3000), Theta2_l(:,4), l_hires(l))
-      write (35,'(*(2X, ES14.6E3))') splint(ls_dp, Theta_l(:,4000), Theta2_l(:,5), l_hires(l))
-    end do
-    close(31)
-    close(32)
-    close(33)
-    close(34)
-    close(35)
+      call spline(ls_dp, Theta_l(:,1),yp1,ypn,Theta2_l(:,1))
+      call spline(ls_dp, Theta_l(:,1000),yp1,ypn,Theta2_l(:,2))
+      call spline(ls_dp, Theta_l(:,2000),yp1,ypn,Theta2_l(:,3))
+      call spline(ls_dp, Theta_l(:,3000),yp1,ypn,Theta2_l(:,4))
+      call spline(ls_dp, Theta_l(:,4000),yp1,ypn,Theta2_l(:,5))
+
+      open (unit=31, file=fileplace//"transfer1.dat", action="write", status="replace")
+      open (unit=32, file=fileplace//"transfer2.dat", action="write", status="replace")
+      open (unit=33, file=fileplace//"transfer3.dat", action="write", status="replace")
+      open (unit=34, file=fileplace//"transfer4.dat", action="write", status="replace")
+      open (unit=35, file=fileplace//"transfer5.dat", action="write", status="replace")
+
+      ! Write splint transfer functions
+      write (31,'(*(2X, ES14.6E3))') c*k_hires(1)/H0
+      write (32,'(*(2X, ES14.6E3))') c*k_hires(1000)/H0
+      write (33,'(*(2X, ES14.6E3))') c*k_hires(2000)/H0
+      write (34,'(*(2X, ES14.6E3))') c*k_hires(3000)/H0
+      write (35,'(*(2X, ES14.6E3))') c*k_hires(4000)/H0
+      do l = 1, 1200
+        write (31,'(*(2X, ES14.6E3))') splint(ls_dp, Theta_l(:,1), Theta2_l(:,1), l_hires(l))
+        write (32,'(*(2X, ES14.6E3))') splint(ls_dp, Theta_l(:,1000), Theta2_l(:,2), l_hires(l))
+        write (33,'(*(2X, ES14.6E3))') splint(ls_dp, Theta_l(:,2000), Theta2_l(:,3), l_hires(l))
+        write (34,'(*(2X, ES14.6E3))') splint(ls_dp, Theta_l(:,3000), Theta2_l(:,4), l_hires(l))
+        write (35,'(*(2X, ES14.6E3))') splint(ls_dp, Theta_l(:,4000), Theta2_l(:,5), l_hires(l))
+      end do
+      close(31)
+      close(32)
+      close(33)
+      close(34)
+      close(35)
+    endif
   end subroutine compute_cls
 
 end module cl_mod
