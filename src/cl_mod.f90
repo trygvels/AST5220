@@ -145,45 +145,6 @@ contains
       end if
 
 
-
-       !write the transfer function to file
-      ! if(ls(l)==2) then
-      !     do k=1,k_num
-      !         write (123,'(*(2X, ES14.6E3))') c*k_hires(k)/H_0 , ls(l)*(ls(l)+1.d0)*&
-      !               Theta_l(l,k)**2/(c*k_hires(k)/H_0)
-      !     end do
-      ! end if
-      ! if(ls(l)==50) then
-      !     do k=1,k_num
-      !         write (124,'(*(2X, ES14.6E3))') ls(l)*(ls(l)+1.d0)*Theta_l(l,k)**2 &
-      !               /(c*k_hires(k)/H_0)
-      !     end do
-      ! end if
-      ! if(ls(l)==200) then
-      !     do k=1,k_num
-      !         write (125,'(*(2X, ES14.6E3))') ls(l)*(ls(l)+1.d0)*Theta_l(l,k)**2 &
-      !               /(c*k_hires(k)/H_0)
-      !     end do
-      ! end if
-      ! if(ls(l)==500) then
-      !     do k=1,k_num
-      !         write (126,'(*(2X, ES14.6E3))') ls(l)*(ls(l)+1.d0)*Theta_l(l,k)**2 &
-      !               /(c*k_hires(k)/H_0)
-      !     end do
-      ! end if
-      ! if(ls(l)==800) then
-      !     do k=1,k_num
-      !         write (127,'(*(2X, ES14.6E3))') ls(l)*(ls(l)+1.d0)*Theta_l(l,k)**2 &
-      !               /(c*k_hires(k)/H_0)
-      !     end do
-      ! end if
-      ! if(ls(l)==1200) then
-      !     do k=1,k_num
-      !         write (128,'(*(2X, ES14.6E3))') ls(l)*(ls(l)+1.d0)*Theta_l(l,k)**2 &
-      !               /(c*k_hires(k)/H_0)
-      !     end do
-      ! end if
-
      ! Timer for loop
        call cpu_time(finish)
        write(*,*) "l = ", l
@@ -241,7 +202,7 @@ contains
       write (32,'(*(2X, ES14.6E3))') splint(ls_dp, Theta_l(:,1000), Theta2_l(:,2), l_hires(l))
       write (33,'(*(2X, ES14.6E3))') splint(ls_dp, Theta_l(:,2000), Theta2_l(:,3), l_hires(l))
       write (34,'(*(2X, ES14.6E3))') splint(ls_dp, Theta_l(:,3000), Theta2_l(:,4), l_hires(l))
-      write (34,'(*(2X, ES14.6E3))') splint(ls_dp, Theta_l(:,4000), Theta2_l(:,5), l_hires(l))
+      write (35,'(*(2X, ES14.6E3))') splint(ls_dp, Theta_l(:,4000), Theta2_l(:,5), l_hires(l))
     end do
     close(31)
     close(32)
