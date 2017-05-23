@@ -133,14 +133,6 @@ contains
             integrandx(i) = S(ilo,k)*splint(z_spline,j_l(:,l),j_l2(:,l),k_hires(k)*(get_eta(0.d0)-get_eta(x_hires(ilo))))
             integralx = integralx + integrandx(i)
           end do
-          if(l==100 .and. k==160) then
-               open (unit=17 ,file="Sj_l.dat",action="write",status="replace")
-                   do i=1,x_num
-                       write (17 ,*) x_hires(i),integrandx(i)
-                   end do
-               close (17)
-           !stop
-           end if
           ! Subtract half of first and last integrand for x
           h1 = (x_lores(x_num/10) - x_lores(1))/(x_num/10)
           Theta(l,k) = h1*(integralx - 0.5d0*(integrandx(1)+integrandx(x_num/10)))
