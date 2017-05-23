@@ -73,7 +73,7 @@ contains
 
     ! #### C_l COMPUTATION OVER l's ####
     ! Method 1 = fast, method 2 = slow
-    method = 2
+    method = 1
 
     do l = 1, l_num
       if (method == 1) then
@@ -169,7 +169,7 @@ contains
 
     ! Splining transfer function
     savetrans = 0
-    if (savetrans = 1) then
+    if (savetrans == 1) then
 
       call spline(ls_dp, Theta_l(:,1),yp1,ypn,Theta2_l(:,1))
       call spline(ls_dp, Theta_l(:,1000),yp1,ypn,Theta2_l(:,2))
