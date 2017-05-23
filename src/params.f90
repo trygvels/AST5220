@@ -16,9 +16,9 @@ module params
   !real(dp), parameter :: Omega_nu     = 0.d0
 
   ! Best fit parameters
-  real(dp), parameter :: Omega_b      = 0.9d0
+  real(dp), parameter :: Omega_b      = 3.d0
   real(dp), parameter :: Omega_m      = 0.24d0
-  real(dp), parameter :: Omega_r      = 8.8d-4
+  real(dp), parameter :: Omega_r      = 8.8d-6
   real(dp), parameter :: Omega_nu     = 0.d0
 
   ! If you want neutrinos, use the two below
