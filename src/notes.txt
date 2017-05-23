@@ -1,0 +1,2 @@
+Try to adjust values to extreme
+Find out k values for plots
