@@ -63,7 +63,7 @@ contains
     ! Generate hires grid for x and k
     do i = 1, x_num !x_num and k_num the same length
       x_hires(i) = x_init - x_init*(i-1.d0)/(x_num-1.d0)
-      k_hires(i)= k_min  + (k_max - k_min)*(i-1.d0)/(k_num-1.d0)
+      k_hires(i)= k_min  + (k_max - k_min)*(i-1.d0)/(k_num-1.d0) ! UNIFORM GRID
     end do
 
     allocate(S_lores(n_t,n_k))  ! Lores source function
