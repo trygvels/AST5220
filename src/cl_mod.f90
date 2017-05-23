@@ -20,7 +20,7 @@ contains
     real(dp),     allocatable,     dimension(:)       :: cls, cls2, ls_dp
     real(dp),     allocatable,     dimension(:,:,:,:) :: S_coeff
     real(dp),     allocatable,     dimension(:,:)     :: S, S2
-    real(dp),     allocatable,     dimension(:,:)     :: Theta
+    real(dp),     allocatable,     dimension(:,:)     :: Theta_l
     real :: start, finish
     real(dp) :: integralx, integralk, h1, h2
 
@@ -72,7 +72,7 @@ contains
     end do
 
 
-    allocate(Theta(l_num,k_num))
+    allocate(Theta_l(l_num,k_num))
     allocate(integrandx(x_num))
     allocate(integrandk(k_num))
     allocate(cls(l_num))
@@ -81,7 +81,7 @@ contains
 
     ! #### C_l COMPUTATION OVER l's ####
     ! Method 1 = fast, method 2 = slow
-    method = 1 
+    method = 2
 
     do l = 1, l_num
       if (method == 1) then
@@ -91,8 +91,8 @@ contains
 
         integralk = 0 ! Reset integral for each value of cls
         do k = 1, k_num
-          integralx = 0 ! Reset integral for each value of theta
-          ! Integrate theta
+          integralx = 0 ! Reset integral for each value of Theta_l
+          ! Integrate Theta_l
           do i = 1, x_num/10
             ilo = 1 + (i-1)*(x_num-1)/(x_num/10-1) !Speed up integration
             x_lores(i) = x_hires(ilo)
@@ -101,10 +101,10 @@ contains
           end do
           ! Subtract half of first and last integrand for x
           h1 = (x_lores(x_num/10) - x_lores(1))/(x_num/10)
-          Theta(l,k) = h1*(integralx - 0.5d0*(integrandx(1)+integrandx(x_num/10)))
+          Theta_l(l,k) = h1*(integralx - 0.5d0*(integrandx(1)+integrandx(x_num/10)))
 
           ! Integrate C_l
-          integrandk(k) = (c*k_hires(k)/H_0)**(n_s-1.d0)*Theta(l,k)**2/k_hires(k)
+          integrandk(k) = (c*k_hires(k)/H_0)**(n_s-1.d0)*Theta_l(l,k)**2/k_hires(k)
           integralk = integralk + integrandk(k)
         end do
 
@@ -121,15 +121,15 @@ contains
 
         integralk = 0 ! Reset integral for each value of cls
         do k = 1, k_num
-          integralx = 0 ! Reset integral for each value of theta
-          ! Integrate theta
+          integralx = 0 ! Reset integral for each value of Theta_l
+          ! Integrate Theta_l
           do i = 1, x_num
             integrandx(i) = S(i,k)*splint(z_spline,j_l(:,l),j_l2(:,l),k_hires(k)*(get_eta(0.d0)-get_eta(x_hires(i))))
             integralx = integralx + integrandx(i)
           end do
           ! Subtract half of first and last integrand for x
-          h1 = (x_lores(x_num) - x_lores(1))/(x_num)
-          Theta(l,k) = h1*(integralx - 0.5d0*(integrandx(1)+integrandx(x_num)))
+          h1 = (x_hires(x_num) - x_hires(1))/(x_num)
+          Theta_l(l,k) = h1*(integralx - 0.5d0*(integrandx(1)+integrandx(x_num)))
 
           if(l==100 .and. k==767) then
               open (unit=17 ,file="Sj_l.dat",action="write",status="replace")
@@ -140,7 +140,7 @@ contains
           !stop
           end if
           ! Integrate C_l
-          integrandk(k) = (c*k_hires(k)/H_0)**(n_s-1.d0)*Theta(l,k)**2/k_hires(k)
+          integrandk(k) = (c*k_hires(k)/H_0)**(n_s-1.d0)*Theta_l(l,k)**2/k_hires(k)
           integralk = integralk + integrandk(k)
         end do
 
@@ -158,36 +158,36 @@ contains
       ! if(ls(l)==2) then
       !     do k=1,k_num
       !         write (123,'(*(2X, ES14.6E3))') c*k_hires(k)/H_0 , ls(l)*(ls(l)+1.d0)*&
-      !               Theta(l,k)**2/(c*k_hires(k)/H_0)
+      !               Theta_l(l,k)**2/(c*k_hires(k)/H_0)
       !     end do
       ! end if
       ! if(ls(l)==50) then
       !     do k=1,k_num
-      !         write (124,'(*(2X, ES14.6E3))') ls(l)*(ls(l)+1.d0)*Theta(l,k)**2 &
+      !         write (124,'(*(2X, ES14.6E3))') ls(l)*(ls(l)+1.d0)*Theta_l(l,k)**2 &
       !               /(c*k_hires(k)/H_0)
       !     end do
       ! end if
       ! if(ls(l)==200) then
       !     do k=1,k_num
-      !         write (125,'(*(2X, ES14.6E3))') ls(l)*(ls(l)+1.d0)*Theta(l,k)**2 &
+      !         write (125,'(*(2X, ES14.6E3))') ls(l)*(ls(l)+1.d0)*Theta_l(l,k)**2 &
       !               /(c*k_hires(k)/H_0)
       !     end do
       ! end if
       ! if(ls(l)==500) then
       !     do k=1,k_num
-      !         write (126,'(*(2X, ES14.6E3))') ls(l)*(ls(l)+1.d0)*Theta(l,k)**2 &
+      !         write (126,'(*(2X, ES14.6E3))') ls(l)*(ls(l)+1.d0)*Theta_l(l,k)**2 &
       !               /(c*k_hires(k)/H_0)
       !     end do
       ! end if
       ! if(ls(l)==800) then
       !     do k=1,k_num
-      !         write (127,'(*(2X, ES14.6E3))') ls(l)*(ls(l)+1.d0)*Theta(l,k)**2 &
+      !         write (127,'(*(2X, ES14.6E3))') ls(l)*(ls(l)+1.d0)*Theta_l(l,k)**2 &
       !               /(c*k_hires(k)/H_0)
       !     end do
       ! end if
       ! if(ls(l)==1200) then
       !     do k=1,k_num
-      !         write (128,'(*(2X, ES14.6E3))') ls(l)*(ls(l)+1.d0)*Theta(l,k)**2 &
+      !         write (128,'(*(2X, ES14.6E3))') ls(l)*(ls(l)+1.d0)*Theta_l(l,k)**2 &
       !               /(c*k_hires(k)/H_0)
       !     end do
       ! end if
@@ -218,6 +218,13 @@ contains
     ! Task: Spline C_l's found above, and output smooth C_l curve for each integer l
     allocate(cl_hires(int(maxval(ls))))
     allocate(l_hires(int(maxval(ls))))
+    allocate(Theta2_l(l_num,5))
+    ! Splining transfer function
+    call spline(ls_dp, Theta_l(:,0),yp1,ypn,Theta2_l(:,1))
+    call spline(ls_dp, Theta_l(:,2000),yp1,ypn,Theta2_l(:,1))
+    call spline(ls_dp, Theta_l(:,3000),yp1,ypn,Theta2_l(:,1))
+    call spline(ls_dp, Theta_l(:,4000),yp1,ypn,Theta2_l(:,1))
+    call spline(ls_dp, Theta_l(:,5000),yp1,ypn,Theta2_l(:,1))
 
     ! Spline cl, get second derivative for splint
     call spline(ls_dp, cls, yp1, ypn, cls2)
@@ -228,6 +235,9 @@ contains
       cl_hires(l) =  splint(ls_dp, cls, cls2, l_hires(l))
     end do
 
+    ! Write splint transfer functions
+    do l = 1, 1200
+      write (1,'(*(2X, ES14.6E3))') splint(ls_dp, Theta_l(:,1000), cls2, l_hires(l))
   end subroutine compute_cls
 
 end module cl_mod
