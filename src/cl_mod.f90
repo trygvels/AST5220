@@ -80,46 +80,13 @@ contains
     allocate(x_lores(x_num/10))
 
     ! #### C_l COMPUTATION OVER l's ####
-    ! Method 1 = Non-uniform, Method 2 = Uniform
-    method = 2 ! Decided on Uniform, now that k is uniform
+    ! Method 1 = fast, method 2 = slow
+    method = 1 
 
     do l = 1, l_num
       if (method == 1) then
         !###############################################
         !################### METHOD 1 ##################
-        !###############################################
-
-        integralk = 0.d0 ! Reset k integral
-        do k = 1, k_num
-          integralx = 0.d0 ! Reset x integral
-
-          ! Compute integrand over x with 1/10th total array
-          do i = 1, x_num/10.d0
-             ilo = 1 + (i-1)*(x_num-1)/(x_num/10-1) !Speed up integration
-             x_lores(i) = x_hires(ilo)
-             integrandx(i)=S(ilo,k)*splint(z_spline,j_l(:,l),j_l2(:,l),k_hires(k)*(get_eta(0.d0)-get_eta(x_hires(ilo))))
-          end do
-
-          ! Trapezoidal integration over x
-          do i=1, x_num/10.d0-1
-             integralx = integralx + (x_lores(i+1)-x_lores(i))*(integrandx(i+1)+integrandx(i))/2.d0
-          end do
-          Theta(l,k) = integralx
-          ! Compute integrand over k
-          integrandk(k) = (c*k_hires(k)/H_0)**(n_s-1.d0)*integralx**2/k_hires(k)
-        end do
-
-        ! Trapezoidal integration over k
-        do k=1, k_num-1
-           integralk = integralk + (k_hires(k+1)-k_hires(k))*(integrandk(k+1)+integrandk(k))/2.d0
-        end do
-
-        ! Task: Store C_l in an array. Optionally output to file
-        cls(l) = integralk*ls(l)*(ls(l)+1.d0)/(2.d0*pi)
-
-      else if (method == 2) then
-        !###############################################
-        !################### METHOD 2 ##################
         !###############################################
 
         integralk = 0 ! Reset integral for each value of cls
@@ -135,6 +102,34 @@ contains
           ! Subtract half of first and last integrand for x
           h1 = (x_lores(x_num/10) - x_lores(1))/(x_num/10)
           Theta(l,k) = h1*(integralx - 0.5d0*(integrandx(1)+integrandx(x_num/10)))
+
+          ! Integrate C_l
+          integrandk(k) = (c*k_hires(k)/H_0)**(n_s-1.d0)*Theta(l,k)**2/k_hires(k)
+          integralk = integralk + integrandk(k)
+        end do
+
+        ! Subtract half of first and last integrand for k
+        h2 = (k_hires(k_num) - k_hires(1))/k_num
+        integralk = h2*(integralk - 0.5d0*(integrandk(1)+integrandk(k_num)))
+
+        ! Store C_l in an array. Optionally output to file
+        cls(l) = integralk*ls(l)*(ls(l)+1.d0)/(2.d0*pi)
+      else if (method == 2) then
+        !###############################################
+        !################### METHOD 2 ##################
+        !###############################################
+
+        integralk = 0 ! Reset integral for each value of cls
+        do k = 1, k_num
+          integralx = 0 ! Reset integral for each value of theta
+          ! Integrate theta
+          do i = 1, x_num
+            integrandx(i) = S(i,k)*splint(z_spline,j_l(:,l),j_l2(:,l),k_hires(k)*(get_eta(0.d0)-get_eta(x_hires(i))))
+            integralx = integralx + integrandx(i)
+          end do
+          ! Subtract half of first and last integrand for x
+          h1 = (x_lores(x_num) - x_lores(1))/(x_num)
+          Theta(l,k) = h1*(integralx - 0.5d0*(integrandx(1)+integrandx(x_num)))
 
           if(l==100 .and. k==767) then
               open (unit=17 ,file="Sj_l.dat",action="write",status="replace")
