@@ -125,7 +125,6 @@ contains
         integralk = 0 ! Reset integral for each value of cls
         do k = 1, k_num
           integralx = 0 ! Reset integral for each value of theta
-
           ! Integrate theta
           do i = 1, x_num/10
             ilo = 1 + (i-1)*(x_num-1)/(x_num/10-1) !Speed up integration
@@ -137,6 +136,14 @@ contains
           h1 = (x_lores(x_num/10) - x_lores(1))/(x_num/10)
           Theta(l,k) = h1*(integralx - 0.5d0*(integrandx(1)+integrandx(x_num/10)))
 
+          if(l==100 .and. k==767) then
+              open (unit=17 ,file="Sj_l.dat",action="write",status="replace")
+                  do i=1,x_num
+                      write (17 ,*) x_hires(i), integrandx(i)
+                  end do
+              close (17)
+          !stop
+          end if
           ! Integrate C_l
           integrandk(k) = (c*k_hires(k)/H_0)**(n_s-1.d0)*Theta(l,k)**2/k_hires(k)
           integralk = integralk + integrandk(k)
@@ -149,7 +156,6 @@ contains
         ! Store C_l in an array. Optionally output to file
         cls(l) = integralk*ls(l)*(ls(l)+1.d0)/(2.d0*pi)
       end if
-
 
 
 
@@ -196,6 +202,8 @@ contains
        write(*,*) "l = ", l
        print '("Time = ",f7.2," seconds.")',finish-start
     end do
+
+
 
     ! Close open data files
     !close(123)
