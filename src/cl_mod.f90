@@ -80,7 +80,7 @@ contains
     allocate(x_lores(x_num/10))
 
     ! #### C_l COMPUTATION OVER l's ####
-    method = 2 ! Method 1 = Non-uniform, Method 2 = Uniform
+    method = 1 ! Method 1 = Non-uniform, Method 2 = Uniform
 
     do l = 1, l_num
       if (method == 1) then
