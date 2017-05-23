@@ -197,13 +197,12 @@ contains
     open (unit=34, file=fileplace//"transfer4.dat", action="write", status="replace")
     open (unit=35, file=fileplace//"transfer5.dat", action="write", status="replace")
     ! Write splint transfer functions
-    do k = 1, 5 !Saving values for integrand calculation
-      write (31,'(*(2X, ES14.6E3))') c*k_hires(0)/H0
-      write (32,'(*(2X, ES14.6E3))') c*k_hires(1000)/H0
-      write (33,'(*(2X, ES14.6E3))') c*k_hires(2000)/H0
-      write (34,'(*(2X, ES14.6E3))') c*k_hires(3000)/H0
-      write (35,'(*(2X, ES14.6E3))') c*k_hires(4000)/H0
-    end do
+    
+    write (31,'(*(2X, ES14.6E3))') c*k_hires(0)/H0
+    write (32,'(*(2X, ES14.6E3))') c*k_hires(1000)/H0
+    write (33,'(*(2X, ES14.6E3))') c*k_hires(2000)/H0
+    write (34,'(*(2X, ES14.6E3))') c*k_hires(3000)/H0
+    write (35,'(*(2X, ES14.6E3))') c*k_hires(4000)/H0
     do l = 1, 1200
       write (31,'(*(2X, ES14.6E3))') splint(ls_dp, Theta_l(:,0), Theta2_l(:,1), l_hires(l))
       write (32,'(*(2X, ES14.6E3))') splint(ls_dp, Theta_l(:,1000), Theta2_l(:,2), l_hires(l))
