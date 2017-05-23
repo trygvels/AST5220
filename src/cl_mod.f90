@@ -80,7 +80,7 @@ contains
     allocate(x_lores(x_num/10))
 
     ! #### C_l COMPUTATION OVER l's ####
-    method = 2 !Change to change method
+    method = 1 !Change to change method
 
     do l = 1, l_num
       if (method == 1) then
