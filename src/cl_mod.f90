@@ -136,7 +136,7 @@ contains
           if(l==17 .and. k==2000) then
                open (unit=17 ,file="Sj_l.dat",action="write",status="replace")
                    do i=1,x_num
-                       write (17 ,*) integrandx(i)
+                       write (17 ,*) x_hires(i),integrandx(i)
                    end do
                close (17)
            !stop
