@@ -16,7 +16,7 @@ module params
   !real(dp), parameter :: Omega_nu     = 0.d0
 
   ! Best fit parameters
-  real(dp), parameter :: Omega_b      = 4.d0*0.046d0
+  real(dp), parameter :: Omega_b      = 0.9d0!0.046d0
   real(dp), parameter :: Omega_m      = 0.224d0
   real(dp), parameter :: Omega_r      = 8.3d-5
   real(dp), parameter :: Omega_nu     = 0.d0
