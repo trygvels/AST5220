@@ -165,7 +165,8 @@ subroutine initialize_time_mod
 
     real(dp), intent(in) :: x
     real(dp)             :: get_dH_p
-    get_dH_p = -0.5*H_0*((Omega_b+Omega_m)*exp(-x)+2*(Omega_r+Omega_nu)*exp(-2*x)-2*Omega_lambda*exp(2*x))/sqrt((Omega_b+Omega_m)*exp(-x)+(Omega_r+Omega_nu)*exp(-2*x)+Omega_lambda*exp(2*x))
+    !get_dH_p = -0.5*H_0*((Omega_b+Omega_m)*exp(-x)+2*(Omega_r+Omega_nu)*exp(-2*x)-2*Omega_lambda*exp(2*x))/sqrt((Omega_b+Omega_m)*exp(-x)+(Omega_r+Omega_nu)*exp(-2*x)+Omega_lambda*exp(2*x))
+    get_dH_p = -H_0**2.d0*(0.5d0*(Omega_b + Omega_m)*exp(-x) + Omega_r*exp(-2.d0*x) - Omega_lambda*exp(2.d0*x))/(get_H_p(x))
   end function get_dH_p
 
 
