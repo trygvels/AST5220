@@ -72,7 +72,7 @@ contains
 
     ! #### C_l COMPUTATION OVER l's ####
     ! Method 1 = fast, method 2 = slow
-    method = 2
+    method = 1
 
     do l = 1, l_num
       if (method == 1) then
@@ -85,7 +85,7 @@ contains
           integralx = 0 ! Reset integral for each value of Theta_l
           ! Integrate Theta_l
           do i = 1, x_num/10
-            ilo = 1 + (i-1)*(x_num-1)/(x_num/10-1) !Speed up integration
+            ilo = 1 + (i-1)*(x_num-1)/(x_num/10-1) !Speed up integration without saving bessel
             x_lores(i) = x_hires(ilo)
             integrandx(i) = S(ilo,k)*splint(z_spline,j_l(:,l),j_l2(:,l),k_hires(k)*(get_eta(0.d0)-get_eta(x_hires(ilo))))
             integralx = integralx + integrandx(i)
