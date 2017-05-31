@@ -72,7 +72,7 @@ contains
 
     ! #### C_l COMPUTATION OVER l's ####
     ! Method 1 = fast, method 2 = slow
-    method = 1
+    method = 2
 
     do l = 1, l_num
       if (method == 1) then
